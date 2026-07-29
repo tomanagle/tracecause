@@ -1,4 +1,5 @@
 .agents/
 .repos/
+CHANGELOG.md
 dist/
 node_modules/
