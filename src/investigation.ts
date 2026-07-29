@@ -42,12 +42,12 @@ export interface InvestigationResult {
 export class IssueSourceService extends Context.Service<
   IssueSourceService,
   IssueSource
->()("Rootcause/IssueSource") {}
+>()("Tracecause/IssueSource") {}
 
 export class EvidenceSourcesService extends Context.Service<
   EvidenceSourcesService,
   readonly EvidenceSource[]
->()("Rootcause/EvidenceSources") {}
+>()("Tracecause/EvidenceSources") {}
 
 export const makeProviderLayer = (
   issueSource: IssueSource,

@@ -286,12 +286,12 @@ export const cloudflareWorkersSource = (
     async *search(intent: SearchIntent, context: ProviderContext) {
       if (options.apiToken === undefined || options.apiToken.length === 0) {
         throw new Error(
-          "Cloudflare is not authenticated. Run `rootcause auth login cloudflare` or set CLOUDFLARE_API_TOKEN.",
+          "Cloudflare is not authenticated. Run `tracecause auth login cloudflare` or set CLOUDFLARE_API_TOKEN.",
         );
       }
       if (options.accountId === undefined || options.accountId.length === 0) {
         throw new Error(
-          "No Cloudflare account is selected. Run `rootcause auth login cloudflare` or set CLOUDFLARE_ACCOUNT_ID.",
+          "No Cloudflare account is selected. Run `tracecause auth login cloudflare` or set CLOUDFLARE_ACCOUNT_ID.",
         );
       }
       const response = await fetchImplementation(

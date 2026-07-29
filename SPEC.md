@@ -1,16 +1,16 @@
-# Rootcause — Product and Technical Specification
+# Tracecause — Product and Technical Specification
 
 **Status:** Draft v0.4  
-**Working product name:** Rootcause  
+**Working product name:** Tracecause
 **Primary implementation language:** TypeScript  
 **Distribution:** npm package with an executable CLI  
-**Primary invocation:** `npx @tomanagle/rootcause investigate ...`
+**Primary invocation:** `npx tracecause investigate ...`
 **Module format:** ESM only  
 **Development toolchain:** Bun, `bun:test`, tsup, Oxlint, and Oxfmt  
 **Internal application runtime:** Effect v4 beta  
 **Supported runtimes:** Bun, Node.js, and Deno
 
-> Rootcause follows identifiers and evidence across production systems to build the context needed to solve a real production bug.
+> Tracecause follows identifiers and evidence across production systems to build the context needed to solve a real production bug.
 
 ---
 
@@ -18,7 +18,7 @@
 
 Production bugs are rarely explained by a single error event. The useful context is fragmented across issue trackers, logs, source code, releases, traces, requests, customer activity, deployments, and service-specific identifiers.
 
-Rootcause begins with an issue and follows the available evidence dynamically.
+Tracecause begins with an issue and follows the available evidence dynamically.
 
 For example:
 
@@ -52,7 +52,7 @@ The MVP does **not** replay or reproduce the bug. Replay may be added later as a
 The first version has one command and one primary outcome:
 
 ```bash
-npx @tomanagle/rootcause investigate "https://sentry.io/organizations/acme/issues/123456/"
+npx tracecause investigate "https://sentry.io/organizations/acme/issues/123456/"
 ```
 
 The command should produce a local investigation case containing:
@@ -121,7 +121,7 @@ Every statement in the output must be classified as one of:
 
 The core must not understand Sentry query syntax, Cloudflare query syntax, CloudWatch Logs Insights syntax, or Mezmo syntax.
 
-Providers translate between their APIs and Rootcause's contracts.
+Providers translate between their APIs and Tracecause's contracts.
 
 ### 3.3 Recursive but bounded
 
@@ -155,7 +155,7 @@ Provider access, evidence retrieval, redaction, and correlation happen locally. 
 
 Production logs may contain credentials, personal information, payment data, internal URLs, and proprietary source details.
 
-Rootcause must:
+Tracecause must:
 
 - Redact before writing agent-facing output.
 - Never print provider tokens.
@@ -169,10 +169,10 @@ Rootcause must:
 
 A user must be able to answer:
 
-- Why did Rootcause perform this query?
+- Why did Tracecause perform this query?
 - Which identifier caused the query?
 - Which evidence introduced that identifier?
-- Why did Rootcause stop?
+- Why did Tracecause stop?
 - Which findings are direct evidence?
 - What was omitted or redacted?
 
@@ -183,13 +183,13 @@ A user must be able to answer:
 ### 4.1 Initialise a repository
 
 ```bash
-npx @tomanagle/rootcause init
+npx tracecause init
 ```
 
 Creates:
 
 ```text
-.rootcause/
+.tracecause/
 ├── config.ts
 ├── policies.yaml
 ├── knowledge.yaml
@@ -199,27 +199,27 @@ Creates:
 └── .gitignore
 ```
 
-The generated `.gitignore` must ignore the entire `.rootcause/cases/` and
-`.rootcause/state/` directories. `knowledge.yaml` is safe, reviewed structural
+The generated `.gitignore` must ignore the entire `.tracecause/cases/` and
+`.tracecause/state/` directories. `knowledge.yaml` is safe, reviewed structural
 knowledge intended to be committed and shared with the repository.
 
 ### 4.2 Configure sources
 
 ```ts
-// .rootcause/config.ts
-import { defineConfig, fieldEntityExtractor } from "@tomanagle/rootcause";
-import { sentryIssueSource } from "@tomanagle/rootcause/providers/sentry";
-import { cloudflareWorkersLogs } from "@tomanagle/rootcause/providers/cloudflare-workers";
+// .tracecause/config.ts
+import { defineConfig, fieldEntityExtractor } from "tracecause";
+import { sentryIssueSource } from "tracecause/providers/sentry";
+import { cloudflareWorkersLogs } from "tracecause/providers/cloudflare-workers";
 
 export default defineConfig({
   issueSources: [
-    // Uses credentials from `rootcause auth login sentry` by default.
+    // Uses credentials from `tracecause auth login sentry` by default.
     sentryIssueSource(),
   ],
 
   evidenceSources: [
     cloudflareWorkersLogs({
-      // Uses the account selected by `rootcause auth login cloudflare`.
+      // Uses the account selected by `tracecause auth login cloudflare`.
 
       // User-specific structured fields present in application logs.
       entities: [
@@ -256,33 +256,33 @@ export default defineConfig({
 });
 ```
 
-Secrets must be resolved from Rootcause's credential-store abstraction or the
+Secrets must be resolved from Tracecause's credential-store abstraction or the
 environment. They must never be written into generated configuration files.
 
 #### 4.2.1 Sentry authentication
 
-Rootcause must not assume that Sentry authentication is already configured.
+Tracecause must not assume that Sentry authentication is already configured.
 Interactive OAuth is the default local-development experience:
 
 ```bash
-npx @tomanagle/rootcause auth login sentry
+npx tracecause auth login sentry
 ```
 
 The command uses Sentry's OAuth 2 device authorization flow:
 
-1. Request a device and user code using Rootcause's registered public OAuth
+1. Request a device and user code using Tracecause's registered public OAuth
    client ID and the minimum read scopes required by the provider.
 2. Open the returned Sentry verification URL in the user's browser when
    possible, and always print the URL and short user code.
 3. Poll at Sentry's instructed interval while the user approves access.
 4. Retrieve the access and refresh tokens.
 5. Discover and display the Sentry organization selected during authorization.
-6. Store the credentials through Rootcause's credential-store abstraction.
+6. Store the credentials through Tracecause's credential-store abstraction.
 
 The normal interaction should require no token copying:
 
 ```text
-Opening Sentry to authorize Rootcause...
+Opening Sentry to authorize Tracecause...
 
 If the browser does not open, visit:
 https://sentry.io/oauth/device/
@@ -293,12 +293,12 @@ Enter code: ABCD-EFGH
 ```
 
 Sentry scopes OAuth access to the organization selected during authorization.
-Rootcause should initially request `org:read`, `project:read`, and `event:read`,
+Tracecause should initially request `org:read`, `project:read`, and `event:read`,
 subject to verification against the exact issue and event endpoints during
 provider implementation. Any scope that is not required by those endpoints
 must be removed.
 
-Before public release, Rootcause must register and maintain a Sentry OAuth
+Before public release, Tracecause must register and maintain a Sentry OAuth
 application and ship its public client ID. No Sentry client secret may be
 embedded in the CLI. The published release process must include a smoke test
 against the registered OAuth client configuration.
@@ -306,9 +306,9 @@ against the registered OAuth client configuration.
 The CLI must support:
 
 ```bash
-rootcause auth login sentry
-rootcause auth status sentry
-rootcause auth logout sentry
+tracecause auth login sentry
+tracecause auth status sentry
+tracecause auth logout sentry
 ```
 
 Access tokens must be refreshed automatically before expiry. Logout removes the
@@ -317,12 +317,12 @@ an applicable revocation mechanism.
 
 Tokens should be stored in the operating system's credential store where a
 supported secure backend is available. If no secure credential store is
-available, Rootcause must require explicit user confirmation before falling
+available, Tracecause must require explicit user confirmation before falling
 back to a user-only, permission-restricted credential file and must clearly
 report its location and security properties. Credential storage is separate
 from repository configuration and case data.
 
-Rootcause must never persist a token in `.rootcause/config.ts`, a case bundle,
+Tracecause must never persist a token in `.tracecause/config.ts`, a case bundle,
 diagnostic output, or the query audit trail.
 
 For CI, automation, self-hosted Sentry installations that do not support the
@@ -343,12 +343,12 @@ Credential precedence is:
 Authentication resolution must be deterministic and friendly to non-interactive
 environments:
 
-- When all required environment credentials are present, Rootcause must use
+- When all required environment credentials are present, Tracecause must use
   them without opening a browser, prompting, or reading the local credential
   store.
 - A non-interactive investigation with missing or partial credentials must fail
   quickly with the exact missing variable names and the relevant setup command.
-- Rootcause must not generate or modify a `.env` file. CI systems should inject
+- Tracecause must not generate or modify a `.env` file. CI systems should inject
   secrets through their native secret stores, while interactive users should
   receive secure OAuth-backed storage.
 - `auth status` must report which credential source is active without printing
@@ -366,18 +366,18 @@ Before an investigation starts, the Sentry provider's
 - The token can read the issue and representative event required by the
   provider.
 
-`rootcause config validate` performs the same checks without starting an
+`tracecause config validate` performs the same checks without starting an
 investigation and reports actionable remediation for missing credentials,
 invalid credentials, inaccessible organizations, and insufficient access.
 
-Rootcause may reuse `SENTRY_AUTH_TOKEN` already configured for other Sentry
+Tracecause may reuse `SENTRY_AUTH_TOKEN` already configured for other Sentry
 tooling, but it must not parse or copy credentials from unrelated configuration
 files in the MVP.
 
-When a coding agent runs the CLI, the Rootcause subprocess receives only the
+When a coding agent runs the CLI, the Tracecause subprocess receives only the
 environment and local credential-store access available to that agent. This is
 the convenient workflow when the user trusts the agent's shell access.
-Otherwise, the user runs Rootcause in their own authenticated shell and gives
+Otherwise, the user runs Tracecause in their own authenticated shell and gives
 the agent access only to the sanitized case bundle.
 
 #### 4.2.2 Cloudflare authentication
@@ -385,7 +385,7 @@ the agent access only to the sanitized case bundle.
 Interactive OAuth is also the default Cloudflare experience:
 
 ```bash
-npx @tomanagle/rootcause auth login cloudflare
+npx tracecause auth login cloudflare
 ```
 
 Cloudflare does not support the OAuth device authorization grant for
@@ -403,22 +403,22 @@ third-party clients. The command therefore uses Authorization Code with PKCE:
 7. Persist the selected non-secret account ID as provider configuration so the
    user is not asked on every investigation.
 
-Rootcause's Cloudflare OAuth client must be registered as a public client, use
+Tracecause's Cloudflare OAuth client must be registered as a public client, use
 PKCE with `S256`, and request the narrowest scope accepted by the Workers
 Observability telemetry query endpoint. Cloudflare account administrators may
-disable public OAuth application access; Rootcause must explain that condition
+disable public OAuth application access; Tracecause must explain that condition
 rather than presenting it as an invalid login.
 
 The CLI must support:
 
 ```bash
-rootcause auth login cloudflare
-rootcause auth status cloudflare
-rootcause auth logout cloudflare
+tracecause auth login cloudflare
+tracecause auth status cloudflare
+tracecause auth logout cloudflare
 ```
 
 If the loopback browser flow cannot work, such as in some remote or headless
-environments, Rootcause must stop with instructions for token-based
+environments, Tracecause must stop with instructions for token-based
 authentication rather than weakening the OAuth flow:
 
 ```bash
@@ -437,14 +437,14 @@ telemetry query before beginning an investigation.
 ### 4.3 Investigate an issue
 
 ```bash
-npx @tomanagle/rootcause investigate \
+npx tracecause investigate \
   "https://sentry.io/organizations/acme/issues/123456/"
 ```
 
 Example terminal output:
 
 ```text
-Rootcause investigation rc_V1StGXR8_Z5jdHi6
+Tracecause investigation tc_V1StGXR8_Z5jdHi6
 
 Seed issue
   TypeError: Cannot read properties of undefined
@@ -474,14 +474,14 @@ Investigation complete
   8 timeline events
   3 context gaps
 
-Context: .rootcause/cases/rc_V1StGXR8_Z5jdHi6/context.md
-JSON:    .rootcause/cases/rc_V1StGXR8_Z5jdHi6/context.json
+Context: .tracecause/cases/tc_V1StGXR8_Z5jdHi6/context.md
+JSON:    .tracecause/cases/tc_V1StGXR8_Z5jdHi6/context.json
 ```
 
 ### 4.4 Agent-oriented output
 
 ```bash
-npx @tomanagle/rootcause investigate <issue-reference> --format agent
+npx tracecause investigate <issue-reference> --format agent
 ```
 
 This mode should:
@@ -497,7 +497,7 @@ This mode should:
 Optional direct stdout mode:
 
 ```bash
-npx @tomanagle/rootcause investigate <issue-reference> \
+npx tracecause investigate <issue-reference> \
   --format agent \
   --output stdout
 ```
@@ -505,7 +505,7 @@ npx @tomanagle/rootcause investigate <issue-reference> \
 ### 4.5 Machine-readable output
 
 ```bash
-npx @tomanagle/rootcause investigate <issue-reference> --format json
+npx tracecause investigate <issue-reference> --format json
 ```
 
 The final JSON should conform to the versioned `InvestigationContext` schema.
@@ -513,7 +513,7 @@ The final JSON should conform to the versioned `InvestigationContext` schema.
 A streaming mode may emit progress as NDJSON:
 
 ```bash
-npx @tomanagle/rootcause investigate <issue-reference> --format ndjson
+npx tracecause investigate <issue-reference> --format ndjson
 ```
 
 ---
@@ -528,13 +528,13 @@ The recommended MVP flow is:
 User asks coding agent to investigate a production issue
                          │
                          ▼
-Agent runs `npx @tomanagle/rootcause investigate <issue> --format agent`
+Agent runs `npx tracecause investigate <issue> --format agent`
                          │
                          ▼
-Rootcause accesses providers locally using configured credentials
+Tracecause accesses providers locally using configured credentials
                          │
                          ▼
-Rootcause writes a sanitized context bundle
+Tracecause writes a sanitized context bundle
                          │
                          ▼
 Agent reads context.md and investigates or fixes the code
@@ -545,7 +545,7 @@ Example instruction to an agent:
 ```text
 Run:
 
-npx @tomanagle/rootcause investigate "<issue-url>" --format agent
+npx tracecause investigate "<issue-url>" --format agent
 
 Then read the generated context.md, inspect the referenced source files,
 and use the evidence to identify the likely cause. Do not treat hypotheses
@@ -559,7 +559,7 @@ CLI-first integration provides:
 - Compatibility with any coding agent capable of running local commands.
 - No agent-specific protocol in the MVP.
 - One workflow for humans, agents, and CI.
-- Provider credentials remain inside the Rootcause process.
+- Provider credentials remain inside the Tracecause process.
 - Reproducible output independent of the model being used.
 - Easy debugging because every query is recorded.
 - A clean path to MCP later without making MCP the core architecture.
@@ -569,7 +569,7 @@ CLI-first integration provides:
 The generated case directory:
 
 ```text
-.rootcause/cases/rc_V1StGXR8_Z5jdHi6/
+.tracecause/cases/tc_V1StGXR8_Z5jdHi6/
 ├── context.md              # Compact context for humans and agents
 ├── context.json            # Complete normalized context
 ├── timeline.json
@@ -591,7 +591,7 @@ MCP is a later convenience layer, not the source of truth.
 A future command may start an MCP server:
 
 ```bash
-npx @tomanagle/rootcause mcp
+npx tracecause mcp
 ```
 
 Potential tools:
@@ -616,7 +616,7 @@ Later releases may generate or install lightweight integrations for common codin
 ```text
 ┌──────────────────────────────┐
 │ CLI                          │
-│ npx @tomanagle/rootcause investigate │
+│ npx tracecause investigate │
 └──────────────┬───────────────┘
                │
 ┌──────────────▼───────────────┐
@@ -660,7 +660,7 @@ Later releases may generate or install lightweight integrations for common codin
 
 ### 6.1 Effect runtime model
 
-Rootcause deliberately uses Effect v4 beta as its internal application runtime.
+Tracecause deliberately uses Effect v4 beta as its internal application runtime.
 The project accepts beta API churn in exchange for building against Effect's
 current architecture.
 
@@ -668,7 +668,7 @@ The exact Effect beta version must be pinned in `package.json` and `bun.lock`;
 semver ranges and automatic beta upgrades are prohibited. Effect upgrades
 require an explicit pull request, release-note review, full typecheck, the
 complete test suite, bundled-runtime smoke tests, and inspection of public
-bundle exports. Effect remains behind Rootcause's internal boundary so beta API
+bundle exports. Effect remains behind Tracecause's internal boundary so beta API
 changes cannot leak into public contracts or persisted schemas.
 
 Effect should own the operational parts of the system:
@@ -704,11 +704,11 @@ type InvestigationProgram = Effect.Effect<
 Effect is an implementation boundary, not a requirement for ordinary users.
 The public programmatic API returns Promises, and third-party provider contracts
 remain based on standard TypeScript, Promises, `AsyncIterable`, web APIs, and
-`AbortSignal`. Rootcause adapts these contracts into Effects and Streams
+`AbortSignal`. Tracecause adapts these contracts into Effects and Streams
 internally. First-party providers may use Effect behind the portable provider
 interface.
 
-Rootcause continues to use:
+Tracecause continues to use:
 
 - Zod for public, configuration, provider-neutral, and persisted schemas.
 - `citty` for CLI parsing.
@@ -726,7 +726,7 @@ the public contracts or persisted schema format.
 ## 7. Monorepo structure
 
 ```text
-rootcause/
+tracecause/
 ├── apps/
 │   └── cli/
 ├── packages/
@@ -756,7 +756,7 @@ rootcause/
 └── bun.lock
 ```
 
-For the first release, only the root `@tomanagle/rootcause` package needs to be public. Internal packages may remain private workspace packages and be bundled into the CLI.
+For the first release, only the root `tracecause` package needs to be public. Internal packages may remain private workspace packages and be bundled into the CLI.
 
 The root `package.json` defines the Bun workspace. Bun is used for dependency
 management, scripts, and tests, but production code must not depend on
@@ -853,10 +853,10 @@ export interface ProviderContext {
 }
 ```
 
-When an Effect fiber running a provider operation is interrupted, Rootcause
+When an Effect fiber running a provider operation is interrupted, Tracecause
 must abort this signal. Provider implementations must pass it through to
 network requests and stop producing evidence promptly. The provider logger
-must apply Rootcause's secret-safe logging rules.
+must apply Tracecause's secret-safe logging rules.
 
 ### 8.2 Issue source
 
@@ -906,7 +906,7 @@ export interface EvidenceSource {
 ```
 
 The portable provider contract deliberately does not expose Effect types.
-Internally, Rootcause wraps provider operations as Effects and adapts evidence
+Internally, Tracecause wraps provider operations as Effects and adapts evidence
 iterables into Effect Streams so cancellation, timeouts, resource cleanup, and
 typed failures are governed by the investigation runtime.
 
@@ -1314,7 +1314,7 @@ The completion summary must state which condition ended the investigation.
 
 ### 10.7 Source resolution and prior knowledge
 
-Before expanding the search frontier, Rootcause should resolve the most likely
+Before expanding the search frontier, Tracecause should resolve the most likely
 provider scope:
 
 - Sentry organization, project, and environment.
@@ -1325,26 +1325,26 @@ Resolution inputs, in descending order of authority, are:
 
 1. Explicit user configuration.
 2. Exact identifiers and current provider evidence.
-3. Confirmed mappings from `.rootcause/knowledge.yaml`.
-4. Repeated local observations from `.rootcause/state/observations.json`.
+3. Confirmed mappings from `.tracecause/knowledge.yaml`.
+4. Repeated local observations from `.tracecause/state/observations.json`.
 5. Agent-proposed or heuristic matches.
 
 An exact Ray ID may be searched across the selected Cloudflare account in a
 narrow time window before a Worker is known. A matching record can then
 identify the Worker service and restrict later searches. When no exact
-identifier exists, Rootcause ranks candidate Workers using request host,
+identifier exists, Tracecause ranks candidate Workers using request host,
 route, Sentry project, environment, release, and prior confirmed mappings.
 
 The chosen scope, confidence, rationale, and mappings used must be included in
 the investigation audit trail. Ambiguous scope must be reported as a gap or
-presented for user/agent selection; Rootcause must not silently search a broad
+presented for user/agent selection; Tracecause must not silently search a broad
 production scope.
 
 ---
 
 ## 11. Correlation and relationships
 
-Rootcause should build an evidence graph, not merely concatenate log lines.
+Tracecause should build an evidence graph, not merely concatenate log lines.
 
 ### 11.1 Node types
 
@@ -1444,7 +1444,7 @@ Repository inspection is useful but deliberately narrow in the MVP.
 
 ### 13.1 MVP behavior
 
-Rootcause should:
+Tracecause should:
 
 - Detect the Git repository root.
 - Read package metadata.
@@ -1454,7 +1454,7 @@ Rootcause should:
 - Record the current commit.
 - Compare a Sentry release or commit SHA when directly available.
 
-Rootcause should not attempt whole-repository semantic analysis in the MVP.
+Tracecause should not attempt whole-repository semantic analysis in the MVP.
 
 ### 13.2 Repository output
 
@@ -1636,21 +1636,21 @@ It must not decide which entity should be investigated next. That belongs to the
 MVP:
 
 ```text
-rootcause init
-rootcause auth login sentry
-rootcause auth status sentry
-rootcause auth logout sentry
-rootcause auth login cloudflare
-rootcause auth status cloudflare
-rootcause auth logout cloudflare
-rootcause investigate <issue-reference>
-rootcause cases list
-rootcause cases show <case-id>
-rootcause knowledge show
-rootcause knowledge promote
-rootcause knowledge validate
-rootcause knowledge forget <mapping-id>
-rootcause config validate
+tracecause init
+tracecause auth login sentry
+tracecause auth status sentry
+tracecause auth logout sentry
+tracecause auth login cloudflare
+tracecause auth status cloudflare
+tracecause auth logout cloudflare
+tracecause investigate <issue-reference>
+tracecause cases list
+tracecause cases show <case-id>
+tracecause knowledge show
+tracecause knowledge promote
+tracecause knowledge validate
+tracecause knowledge forget <mapping-id>
+tracecause config validate
 ```
 
 ### 17.2 Investigate flags
@@ -1685,7 +1685,7 @@ Partial evidence-source failures should normally produce exit code `0` with expl
 ### 17.4 Programmatic API
 
 ```ts
-import { investigate, loadConfig } from "@tomanagle/rootcause";
+import { investigate, loadConfig } from "tracecause";
 
 const config = await loadConfig();
 const result = await investigate({
@@ -1704,9 +1704,9 @@ and Deno.
 Expected invocation forms:
 
 ```bash
-npx @tomanagle/rootcause investigate <issue-reference>
-bunx @tomanagle/rootcause investigate <issue-reference>
-deno run -A npm:@tomanagle/rootcause investigate <issue-reference>
+npx tracecause investigate <issue-reference>
+bunx tracecause investigate <issue-reference>
+deno run -A npm:tracecause investigate <issue-reference>
 ```
 
 The published executable may use a Node shebang for npm and `npx`
@@ -1738,7 +1738,7 @@ changing the core investigation API.
 Use Nano ID with a product prefix:
 
 ```text
-rc_V1StGXR8_Z5jdHi6
+tc_V1StGXR8_Z5jdHi6
 ```
 
 Case IDs do not need to be lexicographically sortable; case listings sort by
@@ -1759,7 +1759,7 @@ Case updates must be written atomically so interruption does not corrupt prior s
 Not required for the first implementation, but persisted state should permit:
 
 ```bash
-npx @tomanagle/rootcause investigate --resume rc_V1StGXR8_Z5jdHi6
+npx tracecause investigate --resume tc_V1StGXR8_Z5jdHi6
 ```
 
 The deduplication key for prior searches must be persisted.
@@ -1770,7 +1770,7 @@ Every persisted top-level document requires `schemaVersion`. Readers must either
 
 ---
 
-## 19. Observability of Rootcause itself
+## 19. Observability of Tracecause itself
 
 Verbose mode should show:
 
@@ -1782,13 +1782,13 @@ Verbose mode should show:
 - Evidence and byte budgets.
 - Stop reason.
 
-Rootcause's own structured diagnostic log should never contain provider tokens or unredacted secrets.
+Tracecause's own structured diagnostic log should never contain provider tokens or unredacted secrets.
 
 ---
 
 ## 20. Investigation knowledge map
 
-Rootcause maintains a repository-scoped map of how issue sources, production
+Tracecause maintains a repository-scoped map of how issue sources, production
 services, telemetry fields, entity kinds, and source code relate. This lets
 future investigations start with better source selection and higher-value
 searches without retaining production evidence.
@@ -1796,7 +1796,7 @@ searches without retaining production evidence.
 ### 20.1 Storage layers
 
 ```text
-.rootcause/
+.tracecause/
 ├── knowledge.yaml
 └── state/
     └── observations.json
@@ -1808,7 +1808,7 @@ local observations and is gitignored.
 
 Authentication credentials are stored outside the repository through the
 credential-store abstraction. Case evidence remains in the gitignored
-`.rootcause/cases/` directory.
+`.tracecause/cases/` directory.
 
 ### 20.2 Learnable structure
 
@@ -1921,7 +1921,7 @@ mappings:
     firstObservedAt: 2026-06-03T01:00:00Z
     lastConfirmedAt: 2026-07-29T02:00:00Z
     provenance:
-      - caseId: rc_example
+      - caseId: tc_example
         observationType: exact_service_match
     status: confirmed
 ```
@@ -1943,7 +1943,7 @@ Every provider must pass a shared contract suite covering:
 - Error mapping.
 - Cancellation.
 
-The same suite must run providers through Rootcause's Effect adapter to verify
+The same suite must run providers through Tracecause's Effect adapter to verify
 that interruption closes iterators and resources, retries follow provider
 policy, timeouts are enforced, and typed failures retain their provider-safe
 details.
@@ -2028,7 +2028,7 @@ source directly.
 - ESM-only source and package exports.
 - Effect v4 beta internal runtime and application layers.
 - Oxlint and Oxfmt checks.
-- `rootcause` executable.
+- `tracecause` executable.
 - `citty` command structure.
 - Sentry OAuth device-flow login, status, logout, refresh, and credential
   storage abstraction.
@@ -2045,13 +2045,13 @@ source directly.
 **Acceptance criteria:**
 
 ```bash
-npx @tomanagle/rootcause --help
-npx @tomanagle/rootcause init
-npx @tomanagle/rootcause auth login sentry
-npx @tomanagle/rootcause auth status sentry
-npx @tomanagle/rootcause auth login cloudflare
-npx @tomanagle/rootcause auth status cloudflare
-npx @tomanagle/rootcause config validate
+npx tracecause --help
+npx tracecause init
+npx tracecause auth login sentry
+npx tracecause auth status sentry
+npx tracecause auth login cloudflare
+npx tracecause auth status cloudflare
+npx tracecause config validate
 ```
 
 work in a clean fixture project.
@@ -2111,7 +2111,7 @@ influenced the plan. No fixture entity value may be written to
 ### Milestone 6 — Publishable MVP
 
 - Bundled public npm package.
-- `npx @tomanagle/rootcause investigate` smoke test.
+- `npx tracecause investigate` smoke test.
 - README and example.
 - Security documentation.
 - Provider author guide.
@@ -2124,7 +2124,7 @@ influenced the plan. No fixture entity value may be written to
 The MVP is complete when all of the following are true:
 
 1. It is implemented in TypeScript.
-2. It runs as `npx @tomanagle/rootcause investigate <issue-reference>`.
+2. It runs as `npx tracecause investigate <issue-reference>`.
 3. The core contains no Sentry or Cloudflare query syntax.
 4. A Sentry issue is normalized through an `IssueSource` implementation.
 5. Cloudflare logs are queried through an `EvidenceSource` implementation.
@@ -2142,7 +2142,7 @@ The MVP is complete when all of the following are true:
 17. A new evidence provider can be added without changing the investigation loop.
 18. The full fixture investigation is deterministic and covered by an end-to-end test.
 19. Published ESM artifacts pass CLI smoke tests on Bun, Node.js, and Deno.
-20. Rootcause records sanitized structural observations and can reuse confirmed
+20. Tracecause records sanitized structural observations and can reuse confirmed
     mappings to improve later source selection and search ranking.
 21. Machine-learned observations are gitignored, while promotion to the shared
     knowledge map is explicit and reviewable.
@@ -2174,7 +2174,7 @@ After the investigate-only MVP proves useful, possible additions include:
 
 ### Interactive investigation
 
-- Ask Rootcause to expand a specific entity.
+- Ask Tracecause to expand a specific entity.
 - Increase a search window.
 - Exclude an unrelated event branch.
 - Mark a relationship as relevant or irrelevant.
@@ -2213,18 +2213,18 @@ Replay should consume the same `InvestigationContext`; it must not become a comp
 
 ## 25. Naming and package plan
 
-**Recommended working name:** Rootcause  
-**Recommended npm package:** `@tomanagle/rootcause`
-**CLI binary:** `rootcause`
+**Recommended working name:** Tracecause
+**Recommended npm package:** `tracecause`
+**CLI binary:** `tracecause`
 
 Example:
 
 ```json
 {
-  "name": "@tomanagle/rootcause",
+  "name": "tracecause",
   "type": "module",
   "bin": {
-    "rootcause": "dist/cli.js"
+    "tracecause": "dist/cli.js"
   },
   "exports": {
     ".": "./dist/index.js",
@@ -2239,7 +2239,7 @@ initial test suite, pinned Effect v4 beta for the internal application runtime,
 `citty` for command parsing, Nano ID for case IDs, Zod for runtime validation,
 Oxlint and Oxfmt for code quality, and tsup for the published bundles.
 
-The name reflects the core behavior: Rootcause follows a path of evidence from one clue to the next.
+The name reflects the core behavior: Tracecause follows a path of evidence from one clue to the next.
 
 Package-name availability must be rechecked against the public npm registry immediately before reserving or publishing it. Search indexes are not an authoritative lock and names may be claimed at any time.
 
@@ -2250,7 +2250,7 @@ Package-name availability must be rechecked against the public npm registry imme
 Build the smallest vertical path before creating every package abstraction:
 
 ```text
-1. `rootcause investigate fixture:sentry-issue`
+1. `tracecause investigate fixture:sentry-issue`
 2. Normalize fixture issue.
 3. Extract fixture Ray ID.
 4. Build a semantic SearchIntent.

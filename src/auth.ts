@@ -47,7 +47,7 @@ export const defaultCredentialPath = (): string => {
     (process.env.XDG_CONFIG_HOME === undefined
       ? join(homedir(), ".config")
       : process.env.XDG_CONFIG_HOME);
-  return join(root, "rootcause", "credentials.json");
+  return join(root, "tracecause", "credentials.json");
 };
 
 export const fileCredentialStore = (

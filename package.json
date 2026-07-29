@@ -1,17 +1,17 @@
 {
-  "name": "@tomanagle/rootcause",
+  "name": "tracecause",
   "version": "1.1.2",
   "description": "Evidence-driven production incident investigation",
-  "homepage": "https://github.com/tomanagle/rootcause#readme",
+  "homepage": "https://github.com/tomanagle/tracecause#readme",
   "bugs": {
-    "url": "https://github.com/tomanagle/rootcause/issues"
+    "url": "https://github.com/tomanagle/tracecause/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tomanagle/rootcause.git"
+    "url": "git+https://github.com/tomanagle/tracecause.git"
   },
   "bin": {
-    "rootcause": "dist/cli.js"
+    "tracecause": "dist/cli.js"
   },
   "files": [
     "dist",

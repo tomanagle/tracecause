@@ -352,7 +352,7 @@ export const sentryIssueSource = (
       }
       if (options.authToken === undefined || options.authToken.length === 0) {
         throw new Error(
-          "Sentry is not authenticated. Run `rootcause auth login sentry` or set SENTRY_AUTH_TOKEN.",
+          "Sentry is not authenticated. Run `tracecause auth login sentry` or set SENTRY_AUTH_TOKEN.",
         );
       }
       const issueUrl = `${baseUrl}/api/0/organizations/${encodeURIComponent(parsedReference.organization)}/issues/${encodeURIComponent(parsedReference.issueId)}/`;

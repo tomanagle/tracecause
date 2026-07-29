@@ -81,7 +81,7 @@ export const renderTerminalSummary = (
   outputDirectory: string,
 ): string =>
   [
-    `Rootcause investigation ${context.caseId}`,
+    `Tracecause investigation ${context.caseId}`,
     "",
     "Seed issue",
     `  ${context.issue.title}`,

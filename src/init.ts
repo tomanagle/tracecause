@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { Effect } from "effect";
 import { InitializationError } from "./errors.js";
 
-const config = `import { defineConfig } from "rootcause";
+const config = `import { defineConfig } from "tracecause";
 
 export default defineConfig({
   issueSources: [],
@@ -43,7 +43,7 @@ const initOperation = <Value>(
 export const initializeRepositoryEffect = Effect.fn("Repository.initialize")(function* (
   root: string,
 ): Effect.fn.Return<void, InitializationError> {
-  const directory = join(root, ".rootcause");
+  const directory = join(root, ".tracecause");
   yield* Effect.all(
     [
       initOperation(join(directory, "cases"), () =>
