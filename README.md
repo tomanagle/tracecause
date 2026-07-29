@@ -10,4 +10,5 @@ Sentry and Cloudflare fixtures:
 bun install
 bun run src/cli.ts investigate fixture:sentry-issue
 ```
+
 # rootcause
