@@ -39,6 +39,7 @@
     "check": "bun run format:check && bun run lint && bun run typecheck && bun test && bun run build"
   },
   "dependencies": {
+    "@aws-sdk/credential-provider-node": "3.972.74",
     "citty": "0.1.6",
     "effect": "4.0.0-beta.102",
     "nanoid": "5.1.5",

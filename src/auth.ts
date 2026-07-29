@@ -41,7 +41,8 @@ export class AuthenticationError extends Data.TaggedError("AuthenticationError")
 }> {}
 
 export const defaultCredentialPath = (): string => {
-  const configured = process.env.ROOTCAUSE_CONFIG_HOME;
+  const configured =
+    process.env.TRACECAUSE_CONFIG_HOME ?? process.env.ROOTCAUSE_CONFIG_HOME;
   const root =
     configured ??
     (process.env.XDG_CONFIG_HOME === undefined

@@ -1,11 +1,19 @@
 import { resolve } from "node:path";
 import { defineCommand, runMain } from "citty";
 import { Effect } from "effect";
+import {
+  fileCredentialStore,
+  loginSentryDevice,
+  resolveCredentials,
+  type ProviderName,
+} from "./auth.js";
+import type { EvidenceSource } from "./contracts.js";
 import { writeCaseEffect } from "./case-store.js";
 import { fixtureCloudflareSource, fixtureIssueSource } from "./fixtures.js";
 import { initializeRepository } from "./init.js";
 import { investigate } from "./investigation.js";
 import { cloudflareWorkersSource } from "./providers/cloudflare.js";
+import { cloudWatchLogsSource } from "./providers/cloudwatch.js";
 import { sentryIssueSource } from "./providers/sentry.js";
 import { renderContextMarkdown, renderTerminalSummary } from "./reporter.js";
 
@@ -43,34 +51,63 @@ const investigateCommand = defineCommand({
   },
   async run({ args }) {
     const isFixture = fixtureIssueSource.canHandle(args.reference);
+    const credentialStore = fileCredentialStore();
+    const sentryCredentials = await resolveCredentials("sentry", credentialStore);
     const issueSource = isFixture
       ? fixtureIssueSource
       : sentryIssueSource({
-          ...(process.env.SENTRY_AUTH_TOKEN === undefined
+          ...(sentryCredentials.credentials?.accessToken === undefined
             ? {}
-            : { authToken: process.env.SENTRY_AUTH_TOKEN }),
-          ...(process.env.SENTRY_ORG === undefined
+            : { authToken: sentryCredentials.credentials.accessToken }),
+          ...(sentryCredentials.credentials?.organization === undefined
             ? {}
-            : { organization: process.env.SENTRY_ORG }),
+            : { organization: sentryCredentials.credentials.organization }),
         });
     if (!issueSource.canHandle(args.reference)) {
       throw new Error("Unsupported issue reference.");
     }
+    const cloudWatchLogGroups = (process.env.TRACECAUSE_AWS_LOG_GROUPS ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0);
+    const liveEvidenceSources: EvidenceSource[] = [];
+    const cloudflareCredentials = await resolveCredentials(
+      "cloudflare",
+      credentialStore,
+    );
+    if (cloudflareCredentials.source !== "missing") {
+      liveEvidenceSources.push(
+        cloudflareWorkersSource({
+          ...(cloudflareCredentials.credentials?.accessToken === undefined
+            ? {}
+            : { apiToken: cloudflareCredentials.credentials.accessToken }),
+          ...(cloudflareCredentials.credentials?.accountId === undefined
+            ? {}
+            : { accountId: cloudflareCredentials.credentials.accountId }),
+        }),
+      );
+    }
+    if (cloudWatchLogGroups.length > 0) {
+      liveEvidenceSources.push(
+        cloudWatchLogsSource({
+          logGroupNames: cloudWatchLogGroups,
+          ...(process.env.AWS_REGION === undefined
+            ? process.env.AWS_DEFAULT_REGION === undefined
+              ? {}
+              : { region: process.env.AWS_DEFAULT_REGION }
+            : { region: process.env.AWS_REGION }),
+        }),
+      );
+    }
+    if (!isFixture && liveEvidenceSources.length === 0) {
+      throw new Error(
+        "No evidence source is configured. Configure Cloudflare or set TRACECAUSE_AWS_LOG_GROUPS with AWS credentials.",
+      );
+    }
     const result = await investigate({
       reference: args.reference,
       issueSource,
-      evidenceSources: isFixture
-        ? [fixtureCloudflareSource]
-        : [
-            cloudflareWorkersSource({
-              ...(process.env.CLOUDFLARE_API_TOKEN === undefined
-                ? {}
-                : { apiToken: process.env.CLOUDFLARE_API_TOKEN }),
-              ...(process.env.CLOUDFLARE_ACCOUNT_ID === undefined
-                ? {}
-                : { accountId: process.env.CLOUDFLARE_ACCOUNT_ID }),
-            }),
-          ],
+      evidenceSources: isFixture ? [fixtureCloudflareSource] : liveEvidenceSources,
       maxQueries: Number.parseInt(args["max-queries"], 10),
       maxDepth: Number.parseInt(args["max-depth"], 10),
     });
@@ -94,6 +131,100 @@ const investigateCommand = defineCommand({
   },
 });
 
+const providerArgument = (): {
+  type: "positional";
+  description: string;
+  required: true;
+} => ({
+  type: "positional",
+  description: "sentry or cloudflare",
+  required: true,
+});
+
+const parseProvider = (value: string): ProviderName => {
+  if (value === "sentry" || value === "cloudflare") return value;
+  throw new Error("Provider must be sentry or cloudflare.");
+};
+
+const authLoginCommand = defineCommand({
+  meta: {
+    name: "login",
+    description: "Authenticate a provider for local use",
+  },
+  args: {
+    provider: providerArgument(),
+  },
+  async run({ args }) {
+    if (args.provider !== "sentry") {
+      throw new Error(
+        "Cloudflare OAuth login is not available in this build. Use CI environment credentials until the public OAuth client is registered.",
+      );
+    }
+    const clientId = process.env.TRACECAUSE_SENTRY_CLIENT_ID;
+    if (clientId === undefined || clientId.length === 0) {
+      throw new Error(
+        "Sentry OAuth is not configured in this build. Set TRACECAUSE_SENTRY_CLIENT_ID to the registered public OAuth client ID.",
+      );
+    }
+    const credentials = await loginSentryDevice({
+      clientId,
+      store: fileCredentialStore(),
+      onVerification: ({ url, userCode, expiresIn }) => {
+        process.stdout.write(
+          `Open ${url}\nEnter code: ${userCode}\nThis code expires in ${expiresIn} seconds.\n`,
+        );
+      },
+    });
+    process.stdout.write(
+      `Authenticated with Sentry organization ${credentials.organization ?? "unknown"}.\n`,
+    );
+  },
+});
+
+const authStatusCommand = defineCommand({
+  meta: {
+    name: "status",
+    description: "Show the active credential source without exposing secrets",
+  },
+  args: {
+    provider: providerArgument(),
+  },
+  async run({ args }) {
+    const provider = parseProvider(args.provider);
+    const resolved = await resolveCredentials(provider, fileCredentialStore());
+    process.stdout.write(
+      `${provider}: ${resolved.source}${resolved.missingEnvironmentVariables.length === 0 ? "" : ` (missing ${resolved.missingEnvironmentVariables.join(", ")})`}\n`,
+    );
+  },
+});
+
+const authLogoutCommand = defineCommand({
+  meta: {
+    name: "logout",
+    description: "Remove locally stored provider credentials",
+  },
+  args: {
+    provider: providerArgument(),
+  },
+  async run({ args }) {
+    const provider = parseProvider(args.provider);
+    await fileCredentialStore().remove(provider);
+    process.stdout.write(`Removed stored ${provider} credentials.\n`);
+  },
+});
+
+const authCommand = defineCommand({
+  meta: {
+    name: "auth",
+    description: "Manage provider authentication",
+  },
+  subCommands: {
+    login: authLoginCommand,
+    status: authStatusCommand,
+    logout: authLogoutCommand,
+  },
+});
+
 const initCommand = defineCommand({
   meta: {
     name: "init",
@@ -112,6 +243,7 @@ const main = defineCommand({
     description: "Evidence-driven production incident investigation",
   },
   subCommands: {
+    auth: authCommand,
     init: initCommand,
     investigate: investigateCommand,
   },
