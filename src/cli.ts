@@ -5,6 +5,7 @@ import { writeCaseEffect } from "./case-store.js";
 import { fixtureCloudflareSource, fixtureIssueSource } from "./fixtures.js";
 import { initializeRepository } from "./init.js";
 import { investigate } from "./investigation.js";
+import { cloudflareWorkersSource } from "./providers/cloudflare.js";
 import { sentryIssueSource } from "./providers/sentry.js";
 import { renderContextMarkdown, renderTerminalSummary } from "./reporter.js";
 
@@ -58,7 +59,18 @@ const investigateCommand = defineCommand({
     const result = await investigate({
       reference: args.reference,
       issueSource,
-      evidenceSources: isFixture ? [fixtureCloudflareSource] : [],
+      evidenceSources: isFixture
+        ? [fixtureCloudflareSource]
+        : [
+            cloudflareWorkersSource({
+              ...(process.env.CLOUDFLARE_API_TOKEN === undefined
+                ? {}
+                : { apiToken: process.env.CLOUDFLARE_API_TOKEN }),
+              ...(process.env.CLOUDFLARE_ACCOUNT_ID === undefined
+                ? {}
+                : { accountId: process.env.CLOUDFLARE_ACCOUNT_ID }),
+            }),
+          ],
       maxQueries: Number.parseInt(args["max-queries"], 10),
       maxDepth: Number.parseInt(args["max-depth"], 10),
     });

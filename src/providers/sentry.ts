@@ -19,9 +19,9 @@ const sentryIssueResponseSchema = z
         id: z.string(),
         slug: z.string(),
       })
-      .passthrough(),
+      .loose(),
   })
-  .passthrough();
+  .loose();
 
 const sentryFrameSchema = z
   .object({
@@ -31,7 +31,7 @@ const sentryFrameSchema = z
     lineNo: z.number().int().positive().nullish(),
     inApp: z.boolean().nullish(),
   })
-  .passthrough();
+  .loose();
 
 const sentryEventResponseSchema = z
   .object({
@@ -49,7 +49,7 @@ const sentryEventResponseSchema = z
             key: z.string(),
             value: z.union([z.string(), z.number(), z.boolean()]),
           })
-          .passthrough(),
+          .loose(),
       )
       .default([]),
     contexts: z.record(z.string(), z.json()).optional(),
@@ -60,7 +60,7 @@ const sentryEventResponseSchema = z
           .object({
             version: z.string(),
           })
-          .passthrough(),
+          .loose(),
       ])
       .nullish(),
     entries: z
@@ -70,11 +70,11 @@ const sentryEventResponseSchema = z
             type: z.string(),
             data: z.unknown(),
           })
-          .passthrough(),
+          .loose(),
       )
       .default([]),
   })
-  .passthrough();
+  .loose();
 
 const exceptionDataSchema = z
   .object({
@@ -89,10 +89,10 @@ const exceptionDataSchema = z
             })
             .nullish(),
         })
-        .passthrough(),
+        .loose(),
     ),
   })
-  .passthrough();
+  .loose();
 
 const requestDataSchema = z
   .object({
@@ -100,7 +100,7 @@ const requestDataSchema = z
     method: z.string().nullish(),
     headers: z.array(z.tuple([z.string(), z.string()])).optional(),
   })
-  .passthrough();
+  .loose();
 
 type SentryEvent = z.infer<typeof sentryEventResponseSchema>;
 type JsonValue = z.infer<ReturnType<typeof z.json>>;

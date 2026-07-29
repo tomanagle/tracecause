@@ -340,6 +340,23 @@ Credential precedence is:
 2. Stored OAuth credentials.
 3. A clear unauthenticated error with a suggested login command.
 
+Authentication resolution must be deterministic and friendly to non-interactive
+environments:
+
+- When all required environment credentials are present, Rootcause must use
+  them without opening a browser, prompting, or reading the local credential
+  store.
+- A non-interactive investigation with missing or partial credentials must fail
+  quickly with the exact missing variable names and the relevant setup command.
+- Rootcause must not generate or modify a `.env` file. CI systems should inject
+  secrets through their native secret stores, while interactive users should
+  receive secure OAuth-backed storage.
+- `auth status` must report which credential source is active without printing
+  token values.
+- Setting environment credentials must provide an intentional per-process
+  override of stored OAuth credentials, making CI and local troubleshooting
+  behavior predictable.
+
 Before an investigation starts, the Sentry provider's
 `validateConfiguration()` implementation must check:
 
@@ -411,6 +428,8 @@ export CLOUDFLARE_ACCOUNT_ID="..."
 
 Environment credentials remain the intended path for CI and automation.
 Credential precedence and secret-handling rules are the same as for Sentry.
+Complete Cloudflare environment credentials must likewise bypass OAuth,
+browser launch, prompts, and credential-store access.
 The Cloudflare provider's `validateConfiguration()` implementation must verify
 the selected account and permission to run a bounded Workers Observability
 telemetry query before beginning an investigation.

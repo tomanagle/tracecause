@@ -11,4 +11,15 @@ bun install
 bun run src/cli.ts investigate fixture:sentry-issue
 ```
 
-# rootcause
+Live Sentry-to-Cloudflare investigations currently use environment credentials:
+
+```bash
+export SENTRY_AUTH_TOKEN="..."
+export CLOUDFLARE_API_TOKEN="..."
+export CLOUDFLARE_ACCOUNT_ID="..."
+
+bun run src/cli.ts investigate \
+  "https://sentry.io/organizations/example/issues/123456/"
+```
+
+Interactive OAuth login is planned but is not implemented yet.
