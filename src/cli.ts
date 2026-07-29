@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import {
   fileCredentialStore,
   loginSentryDevice,
+  resolveCloudflareCredentials,
   resolveCredentials,
   sentryOAuthClientId,
   type ProviderName,
@@ -72,10 +73,9 @@ const investigateCommand = defineCommand({
       .map((value) => value.trim())
       .filter((value) => value.length > 0);
     const liveEvidenceSources: EvidenceSource[] = [];
-    const cloudflareCredentials = await resolveCredentials(
-      "cloudflare",
-      credentialStore,
-    );
+    const cloudflareCredentials = await resolveCloudflareCredentials({
+      store: credentialStore,
+    });
     if (cloudflareCredentials.source !== "missing") {
       liveEvidenceSources.push(
         cloudflareWorkersSource({
@@ -102,7 +102,7 @@ const investigateCommand = defineCommand({
     }
     if (!isFixture && liveEvidenceSources.length === 0) {
       throw new Error(
-        "No evidence source is configured. Configure Cloudflare or set TRACECAUSE_AWS_LOG_GROUPS with AWS credentials.",
+        "No evidence source is configured. Run `npx wrangler login --use-keyring` for Cloudflare, or configure CloudWatch.",
       );
     }
     const result = await investigate({
@@ -158,7 +158,7 @@ const authLoginCommand = defineCommand({
   async run({ args }) {
     if (args.provider !== "sentry") {
       throw new Error(
-        "Cloudflare OAuth login is not available in this build. Use CI environment credentials until the public OAuth client is registered.",
+        "Cloudflare authentication is managed by Wrangler. Run `npx wrangler login --use-keyring`, then retry.",
       );
     }
     const clientId = process.env.TRACECAUSE_SENTRY_CLIENT_ID ?? sentryOAuthClientId;
@@ -187,7 +187,10 @@ const authStatusCommand = defineCommand({
   },
   async run({ args }) {
     const provider = parseProvider(args.provider);
-    const resolved = await resolveCredentials(provider, fileCredentialStore());
+    const resolved =
+      provider === "cloudflare"
+        ? await resolveCloudflareCredentials({ store: fileCredentialStore() })
+        : await resolveCredentials(provider, fileCredentialStore());
     process.stdout.write(
       `${provider}: ${resolved.source}${resolved.missingEnvironmentVariables.length === 0 ? "" : ` (missing ${resolved.missingEnvironmentVariables.join(", ")})`}\n`,
     );

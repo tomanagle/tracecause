@@ -120,4 +120,14 @@ describe("Sentry issue source", () => {
     });
     expect(configured.canHandle("123456")).toBeTrue();
   });
+
+  test("accepts organization-subdomain issue URLs with query parameters", () => {
+    const source = sentryIssueSource({ authToken: "test-token" });
+
+    expect(
+      source.canHandle(
+        "https://posty.sentry.io/issues/7392124237/?query=is%3Aunresolved&referrer=issue-stream",
+      ),
+    ).toBeTrue();
+  });
 });

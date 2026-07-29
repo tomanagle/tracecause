@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   loginSentryDevice,
+  resolveCloudflareCredentials,
   type CredentialStore,
   type ProviderCredentials,
   type ProviderName,
@@ -87,5 +88,85 @@ describe("Sentry device authentication", () => {
       organization: "acme",
     });
     expect(saved.get("sentry")).toEqual(credentials);
+  });
+});
+
+describe("Cloudflare Wrangler authentication", () => {
+  test("reuses Wrangler OAuth and discovers a single account", async () => {
+    const { store } = memoryCredentialStore();
+    const resolved = await resolveCloudflareCredentials({
+      store,
+      environment: {},
+      readToken: async () => "wrangler-token",
+      fetch: Object.assign(
+        async (_input: string | URL | Request, init?: RequestInit) => {
+          expect(new Headers(init?.headers).get("authorization")).toBe(
+            "Bearer wrangler-token",
+          );
+          return Response.json({
+            success: true,
+            result: [{ id: "account-123", name: "Acme" }],
+          });
+        },
+        { preconnect: (_url: string | URL): void => {} },
+      ),
+    });
+
+    expect(resolved).toEqual({
+      source: "wrangler",
+      credentials: {
+        accessToken: "wrangler-token",
+        accountId: "account-123",
+      },
+      missingEnvironmentVariables: [],
+    });
+  });
+
+  test("requires only account selection when Wrangler exposes multiple accounts", async () => {
+    const { store } = memoryCredentialStore();
+    const resolved = await resolveCloudflareCredentials({
+      store,
+      environment: {},
+      readToken: async () => "wrangler-token",
+      fetch: Object.assign(
+        async () =>
+          Response.json({
+            success: true,
+            result: [
+              { id: "account-123", name: "Acme" },
+              { id: "account-456", name: "Other" },
+            ],
+          }),
+        { preconnect: (_url: string | URL): void => {} },
+      ),
+    });
+
+    expect(resolved).toEqual({
+      source: "partial",
+      missingEnvironmentVariables: ["CLOUDFLARE_ACCOUNT_ID"],
+    });
+  });
+
+  test("keeps complete CI environment credentials ahead of Wrangler", async () => {
+    const { store } = memoryCredentialStore();
+    let readWrangler = false;
+    const resolved = await resolveCloudflareCredentials({
+      store,
+      environment: {
+        CLOUDFLARE_API_TOKEN: "ci-token",
+        CLOUDFLARE_ACCOUNT_ID: "ci-account",
+      },
+      readToken: async () => {
+        readWrangler = true;
+        return "wrangler-token";
+      },
+    });
+
+    expect(readWrangler).toBe(false);
+    expect(resolved.source).toBe("environment");
+    expect(resolved.credentials).toEqual({
+      accessToken: "ci-token",
+      accountId: "ci-account",
+    });
   });
 });

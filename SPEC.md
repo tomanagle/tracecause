@@ -383,14 +383,27 @@ the agent access only to the sanitized case bundle.
 
 #### 4.2.2 Cloudflare authentication
 
-Interactive OAuth is also the default Cloudflare experience:
+For local development, Tracecause reuses the OAuth session managed by
+Cloudflare's official Wrangler CLI:
 
 ```bash
-npx tracecause auth login cloudflare
+npx wrangler login --use-keyring
+npx tracecause auth status cloudflare
 ```
 
-Cloudflare does not support the OAuth device authorization grant for
-third-party clients. The command therefore uses Authorization Code with PKCE:
+Tracecause invokes Wrangler's supported `wrangler auth token --json` interface
+and uses the returned access token only in memory. It must not parse, copy, or
+persist Wrangler credential files. Wrangler remains responsible for secure
+storage and token refresh.
+
+If the Wrangler session exposes exactly one account, Tracecause discovers and
+selects it automatically. If it exposes multiple accounts, the user selects the
+non-secret account explicitly with `CLOUDFLARE_ACCOUNT_ID`. This keeps the local
+flow token-free without silently choosing the wrong account.
+
+Direct Tracecause-managed OAuth remains an optional future flow. Cloudflare does
+not support the OAuth device authorization grant for third-party clients, so
+that command would use Authorization Code with PKCE:
 
 1. Generate a unique PKCE verifier, S256 challenge, and CSRF `state`.
 2. Start a temporary loopback callback listener.
@@ -413,14 +426,14 @@ rather than presenting it as an invalid login.
 The CLI must support:
 
 ```bash
-tracecause auth login cloudflare
 tracecause auth status cloudflare
 tracecause auth logout cloudflare
 ```
 
-If the loopback browser flow cannot work, such as in some remote or headless
-environments, Tracecause must stop with instructions for token-based
-authentication rather than weakening the OAuth flow:
+`tracecause auth login cloudflare` must direct the user to
+`npx wrangler login --use-keyring` until direct OAuth is implemented.
+
+CI and headless automation use explicit environment credentials:
 
 ```bash
 export CLOUDFLARE_API_TOKEN="..."

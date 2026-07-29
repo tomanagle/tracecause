@@ -1,3 +1,4 @@
+import { execFile } from "node:child_process";
 import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -111,7 +112,12 @@ export const fileCredentialStore = (
   };
 };
 
-export type CredentialSource = "environment" | "stored" | "missing" | "partial";
+export type CredentialSource =
+  | "environment"
+  | "stored"
+  | "wrangler"
+  | "missing"
+  | "partial";
 
 export interface ResolvedCredentials {
   source: CredentialSource;
@@ -156,6 +162,130 @@ export const resolveCredentials = async (
         credentials: stored,
         missingEnvironmentVariables: [],
       };
+};
+
+const wranglerTokenSchema = z.looseObject({
+  token: z.string().min(1),
+});
+
+const cloudflareAccountsSchema = z.looseObject({
+  success: z.literal(true),
+  result: z.array(
+    z.looseObject({
+      id: z.string().min(1),
+      name: z.string().min(1),
+    }),
+  ),
+});
+
+export type WranglerTokenReader = () => Promise<string>;
+
+export const readWranglerToken = (): Promise<string> =>
+  new Promise((resolve, reject) => {
+    execFile(
+      "wrangler",
+      ["auth", "token", "--json"],
+      { encoding: "utf8" },
+      (error, stdout) => {
+        if (error !== null) {
+          reject(error);
+          return;
+        }
+        const parsed = wranglerTokenSchema.safeParse(JSON.parse(stdout));
+        if (!parsed.success) {
+          reject(new Error("Wrangler returned an invalid authentication response."));
+          return;
+        }
+        resolve(parsed.data.token);
+      },
+    );
+  });
+
+export interface ResolveCloudflareCredentialsOptions {
+  store: CredentialStore;
+  environment?: Record<string, string | undefined>;
+  readToken?: WranglerTokenReader;
+  fetch?: typeof globalThis.fetch;
+}
+
+export const resolveCloudflareCredentials = async (
+  options: ResolveCloudflareCredentialsOptions,
+): Promise<ResolvedCredentials> => {
+  const environment = options.environment ?? process.env;
+  const token = environment.CLOUDFLARE_API_TOKEN;
+  const configuredAccountId = environment.CLOUDFLARE_ACCOUNT_ID;
+  if (token !== undefined) {
+    return configuredAccountId === undefined
+      ? {
+          source: "partial",
+          missingEnvironmentVariables: ["CLOUDFLARE_ACCOUNT_ID"],
+        }
+      : {
+          source: "environment",
+          credentials: { accessToken: token, accountId: configuredAccountId },
+          missingEnvironmentVariables: [],
+        };
+  }
+
+  const stored = await options.store.load("cloudflare");
+  if (stored !== undefined) {
+    return {
+      source: "stored",
+      credentials: stored,
+      missingEnvironmentVariables: [],
+    };
+  }
+
+  let wranglerToken: string;
+  try {
+    wranglerToken = await (options.readToken ?? readWranglerToken)();
+  } catch {
+    return {
+      source: configuredAccountId === undefined ? "missing" : "partial",
+      missingEnvironmentVariables: ["CLOUDFLARE_API_TOKEN"],
+    };
+  }
+
+  if (configuredAccountId !== undefined) {
+    return {
+      source: "wrangler",
+      credentials: {
+        accessToken: wranglerToken,
+        accountId: configuredAccountId,
+      },
+      missingEnvironmentVariables: [],
+    };
+  }
+
+  try {
+    const response = await (options.fetch ?? globalThis.fetch)(
+      "https://api.cloudflare.com/client/v4/accounts?per_page=50",
+      { headers: { authorization: `Bearer ${wranglerToken}` } },
+    );
+    const accounts = cloudflareAccountsSchema.safeParse(await response.json());
+    const accountId = accounts.success ? accounts.data.result.at(0)?.id : undefined;
+    if (
+      !response.ok ||
+      !accounts.success ||
+      accountId === undefined ||
+      accounts.data.result.length !== 1
+    ) {
+      return {
+        source: "partial",
+        missingEnvironmentVariables: ["CLOUDFLARE_ACCOUNT_ID"],
+      };
+    }
+    return {
+      source: "wrangler",
+      credentials: { accessToken: wranglerToken, accountId },
+      missingEnvironmentVariables: [],
+    };
+  } catch {
+    return {
+      source: "partial",
+      missingEnvironmentVariables: ["CLOUDFLARE_ACCOUNT_ID"],
+    };
+  }
 };
 
 const sentryDeviceCodeSchema = z.object({

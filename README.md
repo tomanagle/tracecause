@@ -36,8 +36,12 @@ Authenticate, then investigate a real Sentry issue:
 ```bash
 npx tracecause auth login sentry
 npx tracecause investigate \
-  "https://sentry.io/organizations/<organization-slug>/issues/<issue-id>/"
+  "https://<organization-slug>.sentry.io/issues/<issue-id>/?query=is%3Aunresolved"
 ```
+
+Keep Sentry URLs in quotes. Shells such as zsh interpret `?` as a wildcard and
+`&` as a background-command operator before Tracecause can receive an unquoted
+URL.
 
 This creates a case under `.tracecause/cases/<case-id>/`, including:
 
@@ -62,23 +66,32 @@ credentials still take precedence, which keeps CI deterministic.
 
 ## Investigate with Cloudflare Workers logs
 
-Authenticate with Sentry first, then configure Cloudflare:
+Authenticate once with Sentry and Cloudflare. Tracecause reuses Wrangler's OAuth
+session, including automatic token refresh, so no Cloudflare token needs to be
+copied into your shell or a `.env` file:
 
 ```bash
 npx tracecause auth login sentry
-
-export CLOUDFLARE_API_TOKEN="..."
-export CLOUDFLARE_ACCOUNT_ID="..."
+npx wrangler login --use-keyring
+npx tracecause auth status cloudflare
 
 npx tracecause investigate \
-  "https://sentry.io/organizations/<organization-slug>/issues/<issue-id>/"
+  "https://<organization-slug>.sentry.io/issues/<issue-id>/?query=is%3Aunresolved"
 ```
 
-The Cloudflare token needs access to Workers Observability telemetry for the
-selected account. `tracecause auth login cloudflare` is the intended local flow,
-but it cannot ship until Tracecause's public Cloudflare OAuth application is
-registered. The token variables are therefore still required for Cloudflare in
-the current alpha.
+Tracecause asks Wrangler for its current OAuth token using
+`wrangler auth token --json`; it does not read or copy Wrangler's credential
+files. If your login can access exactly one Cloudflare account, Tracecause
+selects it automatically. For multiple accounts, set only the non-secret account
+selection:
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID="<account-id>"
+```
+
+CI remains non-interactive. Set `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` in the CI secret store; complete environment credentials
+take precedence over Wrangler.
 
 ## Investigate with AWS CloudWatch Logs
 
@@ -96,7 +109,7 @@ export AWS_REGION="ap-southeast-2"
 export TRACECAUSE_AWS_LOG_GROUPS="/aws/lambda/api,/aws/lambda/jobs"
 
 npx tracecause investigate \
-  "https://sentry.io/organizations/<organization-slug>/issues/<issue-id>/"
+  "https://<organization-slug>.sentry.io/issues/<issue-id>/?query=is%3Aunresolved"
 ```
 
 Existing profiles in `~/.aws/config` and `~/.aws/credentials` work too. In CI,
