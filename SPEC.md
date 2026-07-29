@@ -10,7 +10,7 @@
 **Internal application runtime:** Effect v4 beta  
 **Supported runtimes:** Bun, Node.js, and Deno
 
-> Tracecause follows identifiers and evidence across production systems to build the context needed to solve a real production bug.
+> Be first on your team to turn a production bug into a detailed root cause and a fix.
 
 ---
 
@@ -75,11 +75,11 @@ Initial first-party providers:
 
 - **Issue source:** Sentry.
 - **Evidence source:** Cloudflare Workers Observability logs.
+- **Evidence source:** AWS CloudWatch Logs Insights.
 - **Repository source:** Current local Git checkout.
 
 The architecture must allow later additions without modifying the investigation engine:
 
-- CloudWatch Logs.
 - Mezmo.
 - Datadog.
 - Grafana Loki.
@@ -434,6 +434,36 @@ The Cloudflare provider's `validateConfiguration()` implementation must verify
 the selected account and permission to run a bounded Workers Observability
 telemetry query before beginning an investigation.
 
+#### 4.2.3 AWS CloudWatch authentication and log groups
+
+CloudWatch Logs Insights uses AWS's standard credential provider chain. Local
+developers should authenticate with their existing AWS CLI or IAM Identity
+Center profile:
+
+```bash
+aws configure sso --profile my-company # first-time profile setup
+aws sso login --profile my-company
+export AWS_PROFILE="my-company"
+export AWS_REGION="ap-southeast-2"
+export TRACECAUSE_AWS_LOG_GROUPS="/aws/lambda/api,/aws/lambda/jobs"
+```
+
+The provider chain resolves environment variables, IAM Identity Center token
+cache, web identity, shared `~/.aws/config` and `~/.aws/credentials` files,
+credential processes, ECS task credentials, and EC2 instance credentials.
+Environment credentials continue to take precedence for deterministic CI use.
+
+`TRACECAUSE_AWS_LOG_GROUPS` is an explicit, comma-separated allowlist. Tracecause
+must not discover or query every log group in an account. The IAM identity
+should be restricted to `logs:StartQuery` and `logs:GetQueryResults` on the
+intended log groups.
+
+The provider signs Logs Insights requests with AWS Signature Version 4 using
+runtime-neutral Web Crypto APIs. Tracecause delegates credential discovery and
+refresh to AWS's maintained provider chain and does not copy credentials into
+its own credential store. Credentials must never be persisted in the
+repository, case bundle, query audit trail, or diagnostic output.
+
 ### 4.3 Investigate an issue
 
 ```bash
@@ -746,6 +776,7 @@ tracecause/
 │   ├── reporter/
 │   ├── provider-sentry/
 │   ├── provider-cloudflare-workers/
+│   ├── provider-cloudwatch-logs/
 │   └── test-fixtures/
 ├── examples/
 │   ├── cloudflare-worker/
@@ -826,6 +857,12 @@ Initial issue-source adapter.
 #### `provider-cloudflare-workers`
 
 Initial evidence-source adapter.
+
+#### `provider-cloudwatch-logs`
+
+AWS CloudWatch Logs Insights evidence-source adapter with bounded log-group
+selection, SigV4 request signing, query polling, wide-event normalization, and
+structured entity extraction.
 
 ---
 
@@ -1965,7 +2002,8 @@ Create deterministic fixtures for:
 
 ### 21.3 Provider fakes
 
-Provider tests should use recorded, redacted fixtures and local fake HTTP servers. CI must not require live Sentry or Cloudflare credentials.
+Provider tests should use recorded, redacted fixtures and local fake HTTP
+servers. CI must not require live Sentry, Cloudflare, or AWS credentials.
 
 ### 21.4 Property tests
 
@@ -2098,6 +2136,21 @@ Worker-service mapping, search a narrower scope, and record which knowledge
 influenced the plan. No fixture entity value may be written to
 `knowledge.yaml` or local observations.
 
+### Milestone 4.1 — CloudWatch evidence
+
+- CloudWatch Logs Insights evidence source.
+- Runtime-neutral AWS Signature Version 4 signing.
+- Explicit log-group allowlist.
+- Bounded query construction and polling.
+- Structured wide-event normalization and entity extraction.
+- Standard AWS credential-chain support for local profiles, IAM Identity
+  Center, workload identity, instance roles, and environment credentials.
+
+**Acceptance criteria:** A request ID extracted from a Sentry issue queries only
+the configured CloudWatch log groups, produces normalized evidence, discovers
+new entity IDs, redacts personal values, and can be cancelled through the
+provider `AbortSignal`.
+
 ### Milestone 5 — Context bundle
 
 - Timeline selection and grouping.
@@ -2125,7 +2178,7 @@ The MVP is complete when all of the following are true:
 
 1. It is implemented in TypeScript.
 2. It runs as `npx tracecause investigate <issue-reference>`.
-3. The core contains no Sentry or Cloudflare query syntax.
+3. The core contains no Sentry, Cloudflare, or CloudWatch query syntax.
 4. A Sentry issue is normalized through an `IssueSource` implementation.
 5. Cloudflare logs are queried through an `EvidenceSource` implementation.
 6. A Ray ID in the issue can trigger a log search.
@@ -2155,6 +2208,8 @@ The MVP is complete when all of the following are true:
     internal service composition.
 25. Public APIs and third-party provider contracts do not require consumers to
     use Effect.
+26. CloudWatch Logs Insights can be queried through an `EvidenceSource`
+    implementation without changing the investigation loop.
 
 ---
 
