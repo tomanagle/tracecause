@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.2](https://github.com/tomanagle/tracecause/compare/rootcause-v1.1.1...tracecause-v1.1.2) (2026-07-29)
+
+
+### Features
+
+* rename project to Tracecause ([43ca2e6](https://github.com/tomanagle/tracecause/commit/43ca2e6))
+
+
+### Bug Fixes
+
+* publish under npm scope ([7547730](https://github.com/tomanagle/tracecause/commit/7547730c63010de19d46bc1db8a5010c8cf2ed81))
+
 ## [1.1.1](https://github.com/tomanagle/tracecause/compare/rootcause-v1.1.0...rootcause-v1.1.1) (2026-07-29)
 
 
