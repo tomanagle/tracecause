@@ -19,7 +19,9 @@ The initial publication requires a one-time bootstrap because npm cannot attach
 a trusted publisher to a package that does not exist yet:
 
 1. Create a short-lived granular npm access token with permission to create a
-   public `tracecause` package and publishing bypass enabled.
+   public `tracecause` package. Select read/write access to all packages because
+   an unpublished package cannot be selected individually, and enable
+   **Bypass two-factor authentication** when creating the token.
 2. Add it to the GitHub repository as the `NPM_TOKEN` Actions secret.
 3. Merge the next Release Please pull request. The release workflow uses the
    token to create the package.
@@ -28,6 +30,16 @@ a trusted publisher to a package that does not exist yet:
 
 After the secret is deleted, npm automatically uses the workflow's OIDC
 identity for subsequent releases.
+
+If npm authentication causes the publish step to fail after GitHub has already
+created the release and tag:
+
+1. Correct or replace the `NPM_TOKEN` secret as described above.
+2. Open the Release workflow in GitHub Actions and select **Run workflow**.
+3. Enter the existing release tag, such as `tracecause-v1.2.0`, as the ref.
+
+The manual workflow path verifies and publishes that existing package version
+without asking Release Please to create another release.
 
 ## Normal release flow
 

@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref containing the package version to publish
+        required: false
+        default: main
 
 permissions:
   contents: write
@@ -23,6 +29,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -43,6 +51,7 @@ jobs:
         run: bun run check
 
       - name: Create release pull request or GitHub release
+        if: github.event_name == 'push'
         id: release
         uses: googleapis/release-please-action@v4
         with:
@@ -50,11 +59,11 @@ jobs:
           manifest-file: .release-please-manifest.json
 
       - name: Verify package contents
-        if: steps.release.outputs.release_created == 'true'
+        if: steps.release.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
         run: npm pack --dry-run --ignore-scripts
 
       - name: Publish to npm
-        if: steps.release.outputs.release_created == 'true'
+        if: steps.release.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
         run: npm publish --access public --ignore-scripts
         env:
           # Only needed to bootstrap the package. Remove the repository secret
