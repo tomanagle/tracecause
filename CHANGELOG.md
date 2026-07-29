@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/tomanagle/tracecause/compare/tracecause-v1.3.1...tracecause-v1.3.2) (2026-07-29)
+
+
+### Bug Fixes
+
+* handle pending sentry device authorization ([dd929f4](https://github.com/tomanagle/tracecause/commit/dd929f4fa9becf0941f83478c4a39603a73b58cc))
+
 ## [1.3.1](https://github.com/tomanagle/tracecause/compare/tracecause-v1.3.0...tracecause-v1.3.1) (2026-07-29)
 
 
