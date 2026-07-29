@@ -1,6 +1,6 @@
-# Rootcause
+# Tracecause
 
-Rootcause follows identifiers and evidence across production systems to build
+Tracecause follows identifiers and evidence across production systems to build
 the context needed to investigate a production bug.
 
 The project is in early development. The first runnable slice uses deterministic

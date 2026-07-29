@@ -28,7 +28,7 @@ export const writeCaseEffect: (
     context: InvestigationContext,
     evidence: NormalizedEvidence[],
   ): Effect.fn.Return<WrittenCase, CaseWriteError> {
-    const casesDirectory = join(root, ".rootcause", "cases");
+    const casesDirectory = join(root, ".tracecause", "cases");
     const finalDirectory = join(casesDirectory, context.caseId);
     const temporaryDirectory = join(
       casesDirectory,

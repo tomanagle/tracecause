@@ -85,7 +85,7 @@ describe("Sentry issue source", () => {
     const issue = await source.fetchIssue(
       "https://sentry.io/organizations/acme/issues/123456/",
       {
-        caseId: "rc_sentry_test",
+        caseId: "tc_sentry_test",
         signal: new AbortController().signal,
       },
     );

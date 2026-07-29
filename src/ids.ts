@@ -3,7 +3,7 @@ import { customAlphabet } from "nanoid";
 
 const nanoid = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 16);
 
-export const createCaseId = (): string => `rc_${nanoid()}`;
+export const createCaseId = (): string => `tc_${nanoid()}`;
 
 export const stableId = (prefix: string, value: string): string =>
   `${prefix}_${createHash("sha256").update(value).digest("hex").slice(0, 16)}`;

@@ -1,17 +1,17 @@
-# Releasing Rootcause
+# Releasing Tracecause
 
-Rootcause uses Release Please for versioning, changelog updates, GitHub releases,
+Tracecause uses Release Please for versioning, changelog updates, GitHub releases,
 and release tags. npm publishing uses trusted publishing through GitHub's OIDC
 identity; the repository does not need an `NPM_TOKEN`.
 
 ## One-time npm setup
 
-The package owner must configure the `@tomanagle/rootcause` package on npm:
+The package owner must configure the `tracecause` package on npm:
 
 1. Open the package's trusted publisher settings.
 2. Select GitHub Actions.
 3. Set the repository owner to `tomanagle`.
-4. Set the repository name to `rootcause`.
+4. Set the repository name to `tracecause`.
 5. Set the workflow filename to `release.yml`.
 6. Allow `npm publish`.
 
@@ -19,7 +19,7 @@ The initial publication requires a one-time bootstrap because npm cannot attach
 a trusted publisher to a package that does not exist yet:
 
 1. Create a short-lived granular npm access token with permission to create a
-   public package under the `@tomanagle` scope and publishing bypass enabled.
+   public `tracecause` package and publishing bypass enabled.
 2. Add it to the GitHub repository as the `NPM_TOKEN` Actions secret.
 3. Merge the next Release Please pull request. The release workflow uses the
    token to create the package.

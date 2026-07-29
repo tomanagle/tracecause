@@ -86,7 +86,7 @@ describe("Cloudflare Workers evidence source", () => {
 
     const records = [];
     for await (const record of source.search(intent, {
-      caseId: "rc_test",
+      caseId: "tc_test",
       signal: new AbortController().signal,
     })) {
       records.push(record);
@@ -117,7 +117,7 @@ describe("Cloudflare Workers evidence source", () => {
     const source = cloudflareWorkersSource();
     const run = async () => {
       for await (const record of source.search(intent, {
-        caseId: "rc_test",
+        caseId: "tc_test",
         signal: new AbortController().signal,
       })) {
         void record;

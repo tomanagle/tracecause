@@ -97,17 +97,17 @@ const investigateCommand = defineCommand({
 const initCommand = defineCommand({
   meta: {
     name: "init",
-    description: "Initialize Rootcause in the current repository",
+    description: "Initialize Tracecause in the current repository",
   },
   async run() {
     await initializeRepository(process.cwd());
-    process.stdout.write("Initialized .rootcause/\n");
+    process.stdout.write("Initialized .tracecause/\n");
   },
 });
 
 const main = defineCommand({
   meta: {
-    name: "rootcause",
+    name: "tracecause",
     version: "0.0.0",
     description: "Evidence-driven production incident investigation",
   },

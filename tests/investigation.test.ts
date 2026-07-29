@@ -25,7 +25,7 @@ const runFixture = () => {
     reference: "fixture:sentry-issue",
     issueSource: fixtureIssueSource,
     evidenceSources: [fixtureCloudflareSource],
-    caseId: "rc_test",
+    caseId: "tc_test",
     now: () => new Date(fixedTimes[index++] ?? lastFixedTime),
   });
 };
@@ -35,7 +35,7 @@ describe("fixture investigation", () => {
     const result = await runFixture();
     const context = investigationContextSchema.parse(result.context);
 
-    expect(context.caseId).toBe("rc_test");
+    expect(context.caseId).toBe("tc_test");
     expect(context.entities.map((item) => item.kind)).toContain("cloudflare.ray_id");
     expect(context.entities.map((item) => item.kind)).toContain("customer.id");
     expect(context.entities.map((item) => item.kind)).toContain("project.id");
@@ -74,7 +74,7 @@ describe("fixture investigation", () => {
       reference: "fixture:sentry-issue",
       issueSource: fixtureIssueSource,
       evidenceSources: [fixtureCloudflareSource],
-      caseId: "rc_budget",
+      caseId: "tc_budget",
       maxQueries: 1,
       now: () => new Date("2026-07-29T03:00:00.000Z"),
     });
@@ -115,7 +115,7 @@ describe("fixture investigation", () => {
       reference: "fixture:sentry-issue",
       issueSource: fixtureIssueSource,
       evidenceSources: [blockingSource],
-      caseId: "rc_cancel",
+      caseId: "tc_cancel",
       signal: controller.signal,
     });
 
