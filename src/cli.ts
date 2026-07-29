@@ -5,6 +5,7 @@ import {
   fileCredentialStore,
   loginSentryDevice,
   resolveCredentials,
+  sentryOAuthClientId,
   type ProviderName,
 } from "./auth.js";
 import type { EvidenceSource } from "./contracts.js";
@@ -160,12 +161,7 @@ const authLoginCommand = defineCommand({
         "Cloudflare OAuth login is not available in this build. Use CI environment credentials until the public OAuth client is registered.",
       );
     }
-    const clientId = process.env.TRACECAUSE_SENTRY_CLIENT_ID;
-    if (clientId === undefined || clientId.length === 0) {
-      throw new Error(
-        "Sentry OAuth is not configured in this build. Set TRACECAUSE_SENTRY_CLIENT_ID to the registered public OAuth client ID.",
-      );
-    }
+    const clientId = process.env.TRACECAUSE_SENTRY_CLIENT_ID ?? sentryOAuthClientId;
     const credentials = await loginSentryDevice({
       clientId,
       store: fileCredentialStore(),

@@ -60,10 +60,6 @@ Tracecause displays Sentry's verification URL and device code, then stores the
 result outside the repository in a user-only credential file. Environment
 credentials still take precedence, which keeps CI deterministic.
 
-The published CLI needs Tracecause's registered public Sentry OAuth client ID.
-Until that registration is complete, source builds can provide it through
-`TRACECAUSE_SENTRY_CLIENT_ID`.
-
 ## Investigate with Cloudflare Workers logs
 
 Authenticate with Sentry first, then configure Cloudflare:

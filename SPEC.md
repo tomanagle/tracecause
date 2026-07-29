@@ -298,8 +298,9 @@ subject to verification against the exact issue and event endpoints during
 provider implementation. Any scope that is not required by those endpoints
 must be removed.
 
-Before public release, Tracecause must register and maintain a Sentry OAuth
-application and ship its public client ID. No Sentry client secret may be
+Tracecause registers and maintains a Sentry OAuth application and ships its
+public client ID. `TRACECAUSE_SENTRY_CLIENT_ID` may override that value for
+self-hosted Sentry and integration testing. No Sentry client secret may be
 embedded in the CLI. The published release process must include a smoke test
 against the registered OAuth client configuration.
 

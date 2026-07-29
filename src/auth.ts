@@ -4,6 +4,9 @@ import { dirname, join } from "node:path";
 import { Data, Effect, Schedule } from "effect";
 import { z } from "zod";
 
+export const sentryOAuthClientId =
+  "1c221880f85416e5a6cfa2f269d1c58091e05ef8d6deefc42eb3e8dfd36b6a71";
+
 const providerCredentialsSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1).optional(),
