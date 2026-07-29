@@ -2,12 +2,21 @@
   "name": "rootcause",
   "version": "0.0.0",
   "description": "Evidence-driven production incident investigation",
+  "homepage": "https://github.com/tomanagle/rootcause#readme",
+  "bugs": {
+    "url": "https://github.com/tomanagle/rootcause/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomanagle/rootcause.git"
+  },
   "bin": {
     "rootcause": "./dist/cli.js"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "docs"
   ],
   "type": "module",
   "exports": {
@@ -16,12 +25,15 @@
       "import": "./dist/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint --deny-warnings .",
-    "prepare": "./scripts/prepare-effect.sh && lefthook install",
+    "prepare": "./scripts/prepare.sh",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "check": "bun run format:check && bun run lint && bun run typecheck && bun test && bun run build"
