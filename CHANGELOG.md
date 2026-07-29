@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/tomanagle/rootcause/compare/rootcause-v1.1.0...rootcause-v1.1.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* bootstrap npm trusted publishing ([9ee6fef](https://github.com/tomanagle/rootcause/commit/9ee6fef60d1849235625ad1512f1fd4731b5c6ef))
+
 ## [1.1.0](https://github.com/tomanagle/rootcause/compare/rootcause-v1.0.0...rootcause-v1.1.0) (2026-07-29)
 
 
