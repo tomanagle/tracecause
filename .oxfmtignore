@@ -1,0 +1,4 @@
+.agents/
+.repos/
+dist/
+node_modules/

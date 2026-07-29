@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.rootcause/cases/
+.rootcause/state/
+.repos/effect
+*.tsbuildinfo
