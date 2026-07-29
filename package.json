@@ -21,7 +21,7 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint --deny-warnings .",
-    "prepare": "./scripts/prepare-effect.sh",
+    "prepare": "./scripts/prepare-effect.sh && lefthook install",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "check": "bun run format:check && bun run lint && bun run typecheck && bun test && bun run build"
@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@types/bun": "1.3.5",
+    "lefthook": "2.1.10",
     "oxfmt": "0.61.0",
     "oxlint": "1.76.0",
     "tsup": "8.5.1",
