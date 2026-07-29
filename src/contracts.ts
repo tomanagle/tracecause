@@ -119,6 +119,58 @@ export const searchExecutionSchema = z
 
 export type SearchExecution = z.infer<typeof searchExecutionSchema>;
 
+export const knowledgeNodeSchema = z
+  .object({
+    type: z.string().min(1),
+    key: z.string().min(1),
+  })
+  .strict();
+
+export const knowledgeMappingSchema = z
+  .object({
+    schemaVersion: z.literal("1"),
+    id: z.string().min(1),
+    kind: z.string().min(1),
+    from: knowledgeNodeSchema,
+    to: knowledgeNodeSchema,
+    confidence: z.number().min(0).max(1),
+    confirmationCount: z.number().int().positive(),
+    firstObservedAt: z.iso.datetime(),
+    lastConfirmedAt: z.iso.datetime(),
+    provenance: z.array(
+      z
+        .object({
+          caseId: z.string().min(1),
+          observationType: z.string().min(1),
+        })
+        .strict(),
+    ),
+    status: z.enum(["observed", "confirmed", "stale", "contradicted"]),
+  })
+  .strict();
+
+export type KnowledgeMapping = z.infer<typeof knowledgeMappingSchema>;
+
+export const investigationKnowledgeUsageSchema = z
+  .object({
+    usedMappings: z.array(
+      z
+        .object({
+          mappingId: z.string(),
+          confidence: z.number().min(0).max(1),
+          rationale: z.string(),
+        })
+        .strict(),
+    ),
+    newObservationIds: z.array(z.string()),
+    rejectedMappingIds: z.array(z.string()),
+  })
+  .strict();
+
+export type InvestigationKnowledgeUsage = z.infer<
+  typeof investigationKnowledgeUsageSchema
+>;
+
 export const timelineEventSchema = z
   .object({
     id: z.string(),
@@ -169,6 +221,7 @@ export const investigationContextSchema = z
         externalId: z.string(),
       }),
     ),
+    knowledge: investigationKnowledgeUsageSchema,
     completion: z.object({
       reason: z.enum([
         "frontier-exhausted",

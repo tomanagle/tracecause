@@ -35,6 +35,15 @@ export const renderContextMarkdown = (context: InvestigationContext): string => 
         `- ${search.intent.reason} Returned ${search.recordsAccepted} new records.`,
     ),
     "",
+    "## Prior knowledge used",
+    "",
+    ...(context.knowledge.usedMappings.length === 0
+      ? ["- No reviewed mappings influenced this investigation."]
+      : context.knowledge.usedMappings.map(
+          (mapping) =>
+            `- \`${mapping.mappingId}\` (${mapping.confidence.toFixed(2)} confidence): ${mapping.rationale}`,
+        )),
+    "",
     "## Relevant entities",
     "",
     ...context.entities.map(

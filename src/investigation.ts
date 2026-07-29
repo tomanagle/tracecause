@@ -4,6 +4,7 @@ import type {
   EvidenceSource,
   InvestigationContext,
   IssueSource,
+  KnowledgeMapping,
   NormalizedEvidence,
   SearchExecution,
   SearchIntent,
@@ -27,6 +28,7 @@ export interface InvestigateOptions {
   maxQueries?: number;
   maxDepth?: number;
   signal?: AbortSignal;
+  knowledgeMappings?: KnowledgeMapping[];
 }
 
 export type InvestigationInput = Omit<
@@ -96,6 +98,12 @@ const candidateKey = (
   [sourceId, entity.kind, entity.canonicalValue, range.from, range.to, range.mode].join(
     "|",
   );
+
+const providerForMapping = (mapping: KnowledgeMapping): string | undefined => {
+  if (mapping.to.type === "cloudflare.service") return "cloudflare-workers";
+  if (mapping.to.type === "cloudwatch.service") return "aws-cloudwatch";
+  return undefined;
+};
 
 const collect = async <T>(iterable: AsyncIterable<T>): Promise<T[]> => {
   const values: T[] = [];
@@ -245,6 +253,30 @@ export const investigateEffect: (
     catch: (cause) => new IssueFetchError({ reference: options.reference, cause }),
   });
   const issue = yield* validateIssue(issueSource.id, rawIssue);
+  const applicableKnowledge = (options.knowledgeMappings ?? []).filter(
+    (mapping) =>
+      mapping.status === "confirmed" &&
+      mapping.from.type === "sentry.project" &&
+      mapping.from.key === issue.service,
+  );
+  const preferredProviderIds = new Set(
+    applicableKnowledge
+      .map(providerForMapping)
+      .filter((providerId) => providerId !== undefined),
+  );
+  const orderedEvidenceSources = [...evidenceSources].toSorted(
+    (left, right) =>
+      Number(preferredProviderIds.has(right.id)) -
+      Number(preferredProviderIds.has(left.id)),
+  );
+  const usedKnowledge = new Map<
+    string,
+    {
+      mappingId: string;
+      confidence: number;
+      rationale: string;
+    }
+  >();
 
   const evidenceByFingerprint = new Map<string, NormalizedEvidence>();
   const entitiesByKey = new Map<string, Entity>();
@@ -293,7 +325,7 @@ export const investigateEffect: (
       continue;
     }
     const range = windowFor(candidate.entity, issue.occurredAt);
-    const source = evidenceSources.find((item) => {
+    const source = orderedEvidenceSources.find((item) => {
       const provisional: SearchIntent = {
         id: "candidate",
         sourceId: item.id,
@@ -311,6 +343,16 @@ export const investigateEffect: (
       return item.supports(provisional);
     });
     if (source === undefined) continue;
+    const selectedMapping = applicableKnowledge.find(
+      (mapping) => providerForMapping(mapping) === source.id,
+    );
+    if (selectedMapping !== undefined) {
+      usedKnowledge.set(selectedMapping.id, {
+        mappingId: selectedMapping.id,
+        confidence: selectedMapping.confidence,
+        rationale: `${selectedMapping.from.type} ${selectedMapping.from.key} maps to ${selectedMapping.to.type} ${selectedMapping.to.key}, so ${source.id} was ranked first.`,
+      });
+    }
     const key = candidateKey(source.id, candidate.entity, range);
     if (searched.has(key)) continue;
     searched.add(key);
@@ -394,6 +436,11 @@ export const investigateEffect: (
       providerId: record.source.providerId,
       externalId: record.source.externalId,
     })),
+    knowledge: {
+      usedMappings: [...usedKnowledge.values()],
+      newObservationIds: [],
+      rejectedMappingIds: [],
+    },
     completion: { reason: completionReason },
   } satisfies InvestigationContext;
   return { context, evidence: sanitized.evidence };
@@ -409,6 +456,9 @@ export const investigate = (
     ...(options.now === undefined ? {} : { now: options.now }),
     ...(options.maxQueries === undefined ? {} : { maxQueries: options.maxQueries }),
     ...(options.maxDepth === undefined ? {} : { maxDepth: options.maxDepth }),
+    ...(options.knowledgeMappings === undefined
+      ? {}
+      : { knowledgeMappings: options.knowledgeMappings }),
   }).pipe(Effect.provide(layer));
   return Effect.runPromise(program, { signal: options.signal });
 };

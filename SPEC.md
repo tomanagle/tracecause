@@ -2071,99 +2071,26 @@ source directly.
 
 ---
 
-## 22. MVP milestones
+## 22. Remaining MVP milestones
 
-### Milestone 1 — CLI and contracts
+The CLI foundation, Sentry ingestion, Cloudflare exact correlation, CloudWatch
+evidence, recursive entity pivoting, bounded query audit, sanitized case
+persistence, local structural observations, reviewed knowledge commands, and
+knowledge-guided provider ranking are implemented. Their behavioral contracts
+remain documented above and covered by deterministic tests.
 
-- TypeScript monorepo.
-- Bun workspace and lockfile.
-- ESM-only source and package exports.
-- Effect v4 beta internal runtime and application layers.
-- Oxlint and Oxfmt checks.
-- `tracecause` executable.
-- `citty` command structure.
-- Sentry OAuth device-flow login, status, logout, refresh, and credential
-  storage abstraction.
-- Cloudflare OAuth authorization-code-with-PKCE login, status, logout, refresh,
-  account selection, and token fallback.
-- Config loader.
-- Zod runtime schemas.
-- Local case store.
-- Provider contract test harness.
-- Effect provider adapters, typed error hierarchy, scoped cancellation, and
-  deterministic test layers.
-- tsup library and CLI builds.
+### Milestone 4 completion — Scoped recursive pivoting
 
-**Acceptance criteria:**
-
-```bash
-npx tracecause --help
-npx tracecause init
-npx tracecause auth login sentry
-npx tracecause auth status sentry
-npx tracecause auth login cloudflare
-npx tracecause auth status cloudflare
-npx tracecause config validate
-```
-
-work in a clean fixture project.
-
-The equivalent `bunx` commands and the Deno npm-package invocation must pass
-the published-artifact smoke tests.
-
-### Milestone 2 — Sentry seed issue
-
-- Sentry URL parsing.
-- Issue and representative event retrieval.
-- Normalized issue schema.
-- Initial entity extraction.
-- Sanitized persisted case.
-
-**Acceptance criteria:** A fixture Sentry issue creates a case with error, timestamp, stack frames, release, request metadata, and seed entities.
-
-### Milestone 3 — Cloudflare exact correlation
-
-- Cloudflare Workers provider.
-- Provider-neutral search intents.
-- Ray ID and request ID searches.
-- Evidence normalization and deduplication.
-- Query audit log.
-
-**Acceptance criteria:** A Ray ID extracted from the issue retrieves the matching fixture logs without Cloudflare-specific logic in the core.
-
-### Milestone 4 — Recursive pivoting
-
-- Search frontier.
-- Entity scoring.
 - User-configured entity fields.
-- Customer and resource history searches.
-- Query budgets and stop rules.
-- Source resolution.
-- Local structural observations.
-- Reviewed investigation knowledge map.
-- Knowledge inspection, validation, promotion, and forgetting commands.
+- Use confirmed service mappings to narrow Worker services, telemetry datasets,
+  and CloudWatch log groups rather than only ranking providers.
+- Contradiction tracking, stale mapping handling, and confidence decay.
+- Record rejected or stale mappings in the investigation knowledge audit.
 
-**Acceptance criteria:** The fixture investigation follows Ray ID → customer ID → project ID and terminates deterministically.
-
-A second fixture investigation should reuse a confirmed Sentry-project to
-Worker-service mapping, search a narrower scope, and record which knowledge
-influenced the plan. No fixture entity value may be written to
+**Acceptance criteria:** A second fixture investigation reuses a confirmed
+Sentry-project to Worker-service mapping, searches a narrower scope, and records
+which knowledge influenced the plan. No fixture entity value may be written to
 `knowledge.yaml` or local observations.
-
-### Milestone 4.1 — CloudWatch evidence
-
-- CloudWatch Logs Insights evidence source.
-- Runtime-neutral AWS Signature Version 4 signing.
-- Explicit log-group allowlist.
-- Bounded query construction and polling.
-- Structured wide-event normalization and entity extraction.
-- Standard AWS credential-chain support for local profiles, IAM Identity
-  Center, workload identity, instance roles, and environment credentials.
-
-**Acceptance criteria:** A request ID extracted from a Sentry issue queries only
-the configured CloudWatch log groups, produces normalized evidence, discovers
-new entity IDs, redacts personal values, and can be cancelled through the
-provider `AbortSignal`.
 
 ### Milestone 5 — Context bundle
 

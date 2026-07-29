@@ -2,6 +2,7 @@ export * from "./auth.js";
 export * from "./contracts.js";
 export * from "./errors.js";
 export * from "./investigation.js";
+export * from "./knowledge.js";
 export * from "./providers/cloudflare.js";
 export * from "./providers/cloudwatch.js";
 export * from "./providers/sentry.js";

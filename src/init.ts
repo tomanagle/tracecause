@@ -31,6 +31,12 @@ entityFields: {}
 mappings: []
 `;
 
+const observations = `{
+  "schemaVersion": "1",
+  "mappings": []
+}
+`;
+
 const initOperation = <Value>(
   path: string,
   operation: () => Promise<Value>,
@@ -77,6 +83,12 @@ export const initializeRepositoryEffect = Effect.fn("Repository.initialize")(fun
       ),
       initOperation(join(directory, ".gitignore"), () =>
         writeFile(join(directory, ".gitignore"), "cases/\nstate/\n", {
+          encoding: "utf8",
+          flag: "wx",
+        }),
+      ),
+      initOperation(join(directory, "state", "observations.json"), () =>
+        writeFile(join(directory, "state", "observations.json"), observations, {
           encoding: "utf8",
           flag: "wx",
         }),

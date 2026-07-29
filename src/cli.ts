@@ -14,6 +14,14 @@ import { writeCaseEffect } from "./case-store.js";
 import { fixtureCloudflareSource, fixtureIssueSource } from "./fixtures.js";
 import { initializeRepository } from "./init.js";
 import { investigate } from "./investigation.js";
+import {
+  forgetKnowledgeEffect,
+  inspectKnowledgeEffect,
+  loadConfirmedKnowledgeEffect,
+  promoteKnowledgeEffect,
+  recordKnowledgeObservationsEffect,
+  validateKnowledgeEffect,
+} from "./knowledge.js";
 import { cloudflareWorkersSource } from "./providers/cloudflare.js";
 import { cloudWatchLogsSource } from "./providers/cloudwatch.js";
 import { sentryIssueSource } from "./providers/sentry.js";
@@ -53,6 +61,7 @@ const investigateCommand = defineCommand({
   },
   async run({ args }) {
     const isFixture = fixtureIssueSource.canHandle(args.reference);
+    const repositoryRoot = process.cwd();
     const credentialStore = fileCredentialStore();
     const sentryCredentials = await resolveCredentials("sentry", credentialStore);
     const issueSource = isFixture
@@ -105,13 +114,25 @@ const investigateCommand = defineCommand({
         "No evidence source is configured. Run `npx wrangler login --use-keyring` for Cloudflare, or configure CloudWatch.",
       );
     }
+    const knowledgeMappings = await Effect.runPromise(
+      loadConfirmedKnowledgeEffect(repositoryRoot),
+    );
     const result = await investigate({
       reference: args.reference,
       issueSource,
       evidenceSources: isFixture ? [fixtureCloudflareSource] : liveEvidenceSources,
       maxQueries: Number.parseInt(args["max-queries"], 10),
       maxDepth: Number.parseInt(args["max-depth"], 10),
+      knowledgeMappings,
     });
+    const observationIds = await Effect.runPromise(
+      recordKnowledgeObservationsEffect(
+        repositoryRoot,
+        result.context,
+        result.evidence,
+      ),
+    );
+    result.context.knowledge.newObservationIds = observationIds;
 
     if (args.output === "stdout") {
       if (args.format === "json") {
@@ -235,6 +256,76 @@ const initCommand = defineCommand({
   },
 });
 
+const knowledgeShowCommand = defineCommand({
+  meta: {
+    name: "show",
+    description: "Show reviewed repository knowledge",
+  },
+  async run() {
+    const document = await Effect.runPromise(inspectKnowledgeEffect(process.cwd()));
+    process.stdout.write(`${JSON.stringify(document, null, 2)}\n`);
+  },
+});
+
+const knowledgeValidateCommand = defineCommand({
+  meta: {
+    name: "validate",
+    description: "Validate reviewed knowledge and local observations",
+  },
+  async run() {
+    const result = await Effect.runPromise(validateKnowledgeEffect(process.cwd()));
+    process.stdout.write(
+      `Knowledge is valid: ${result.confirmed} reviewed mappings, ${result.observations} local observations.\n`,
+    );
+  },
+});
+
+const knowledgePromoteCommand = defineCommand({
+  meta: {
+    name: "promote",
+    description: "Promote reviewed local observations into knowledge.yaml",
+  },
+  async run() {
+    const promoted = await Effect.runPromise(promoteKnowledgeEffect(process.cwd()));
+    process.stdout.write(`Promoted ${promoted} mappings to knowledge.yaml.\n`);
+  },
+});
+
+const knowledgeForgetCommand = defineCommand({
+  meta: {
+    name: "forget",
+    description: "Remove a mapping from reviewed knowledge and local observations",
+  },
+  args: {
+    id: {
+      type: "positional",
+      description: "Mapping ID",
+      required: true,
+    },
+  },
+  async run({ args }) {
+    const removed = await Effect.runPromise(
+      forgetKnowledgeEffect(process.cwd(), args.id),
+    );
+    process.stdout.write(
+      removed ? `Forgot mapping ${args.id}.\n` : `Mapping ${args.id} was not found.\n`,
+    );
+  },
+});
+
+const knowledgeCommand = defineCommand({
+  meta: {
+    name: "knowledge",
+    description: "Inspect and review learned investigation structure",
+  },
+  subCommands: {
+    show: knowledgeShowCommand,
+    validate: knowledgeValidateCommand,
+    promote: knowledgePromoteCommand,
+    forget: knowledgeForgetCommand,
+  },
+});
+
 const main = defineCommand({
   meta: {
     name: "tracecause",
@@ -245,6 +336,7 @@ const main = defineCommand({
     auth: authCommand,
     init: initCommand,
     investigate: investigateCommand,
+    knowledge: knowledgeCommand,
   },
 });
 

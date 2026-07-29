@@ -29,6 +29,11 @@ Every search records what triggered it and why. Facts retain evidence
 references, hypotheses stay visibly separate, and missing context remains
 explicit.
 
+Tracecause also learns non-sensitive structure between investigations. For
+example, it can observe that a Sentry project corresponds to a Cloudflare
+Worker service, then rank that provider first in later investigations after
+you review and promote the mapping.
+
 ## Quick start
 
 Authenticate, then investigate a real Sentry issue:
@@ -49,6 +54,29 @@ This creates a case under `.tracecause/cases/<case-id>/`, including:
 - `context.json` — complete normalized context
 - `evidence.ndjson` — sanitized evidence records
 - `queries.ndjson` — the query audit trail
+
+## Review learned structure
+
+Investigations write sanitized structural observations to the gitignored
+`.tracecause/state/observations.json`. They never write customer IDs, request
+IDs, raw logs, payloads, or credentials to the knowledge map.
+
+Review and promote useful mappings explicitly:
+
+```bash
+npx tracecause knowledge validate
+npx tracecause knowledge show
+npx tracecause knowledge promote
+```
+
+Promoted mappings are written to `.tracecause/knowledge.yaml`, which is safe to
+review and commit. Later investigations can use confirmed mappings to rank
+evidence providers; each use is recorded in `context.md` and `context.json`.
+Remove an obsolete mapping with:
+
+```bash
+npx tracecause knowledge forget <mapping-id>
+```
 
 ## Sign in locally
 
@@ -156,8 +184,9 @@ login remain in progress.
 
 Tracecause is in early development. Sentry issue ingestion, Cloudflare Workers
 logs, CloudWatch Logs Insights, recursive evidence pivots, case persistence,
-redaction, Sentry device login, and agent-oriented output are implemented.
-Cloudflare OAuth, repository source resolution, and the persistent
-investigation knowledge map remain planned.
+redaction, local authentication, agent-oriented output, structural observation,
+reviewed knowledge promotion, and knowledge-guided provider ranking are
+implemented. Repository stack-frame resolution, user-defined entity fields,
+and narrower knowledge-guided provider scopes remain planned.
 
 See [SPEC.md](./SPEC.md) for the complete product and technical plan.
