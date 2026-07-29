@@ -56,3 +56,7 @@ jobs:
       - name: Publish to npm
         if: steps.release.outputs.release_created == 'true'
         run: npm publish --access public --ignore-scripts
+        env:
+          # Only needed to bootstrap the package. Remove the repository secret
+          # after npm trusted publishing has been configured.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

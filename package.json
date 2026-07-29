@@ -11,7 +11,7 @@
     "url": "git+https://github.com/tomanagle/rootcause.git"
   },
   "bin": {
-    "rootcause": "./dist/cli.js"
+    "rootcause": "dist/cli.js"
   },
   "files": [
     "dist",

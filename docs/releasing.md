@@ -15,9 +15,19 @@ The package owner must configure the `rootcause` package on npm:
 5. Set the workflow filename to `release.yml`.
 6. Allow `npm publish`.
 
-The initial package publication may need to be performed manually before npm
-exposes trusted publisher settings. After trusted publishing works, remove any
-temporary automation token.
+The initial publication requires a one-time bootstrap because npm cannot attach
+a trusted publisher to a package that does not exist yet:
+
+1. Create a granular npm access token scoped to the `rootcause` package with
+   read/write permission and publishing bypass enabled.
+2. Add it to the GitHub repository as the `NPM_TOKEN` Actions secret.
+3. Merge the next Release Please pull request. The release workflow uses the
+   token to create the package.
+4. Configure trusted publishing using the settings above.
+5. Delete the `NPM_TOKEN` repository secret.
+
+After the secret is deleted, npm automatically uses the workflow's OIDC
+identity for subsequent releases.
 
 ## Normal release flow
 
