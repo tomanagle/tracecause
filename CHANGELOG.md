@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.0](https://github.com/tomanagle/tracecause/compare/tracecause-v1.2.0...tracecause-v1.3.0) (2026-07-29)
+
+
+### Features
+
+* add cloudwatch evidence source ([6078a93](https://github.com/tomanagle/tracecause/commit/6078a93507b0fcc50c6d504d687e8d4d93e02002))
+
+
+### Bug Fixes
+
+* configure sentry oauth client ([a503835](https://github.com/tomanagle/tracecause/commit/a503835d9e73a3039ae02545ab3dacbd6a8acccc))
+* support retrying npm publication ([9accf86](https://github.com/tomanagle/tracecause/commit/9accf8695543b6bce75785fa44efd473b883fbeb))
+* use npm trusted publishing in release workflow ([6b0d8a9](https://github.com/tomanagle/tracecause/commit/6b0d8a9a04b1e1fad0555251da4a723a89055284))
+
 ## [1.2.0](https://github.com/tomanagle/tracecause/compare/rootcause-v1.1.1...tracecause-v1.2.0) (2026-07-29)
 
 
