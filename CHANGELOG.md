@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/tomanagle/tracecause/compare/tracecause-v1.3.0...tracecause-v1.3.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* retry npm publication ([f2a7a0c](https://github.com/tomanagle/tracecause/commit/f2a7a0c59ba868d257bb2a1bc343c28e109fe2c2))
+
 ## [1.3.0](https://github.com/tomanagle/tracecause/compare/tracecause-v1.2.0...tracecause-v1.3.0) (2026-07-29)
 
 
