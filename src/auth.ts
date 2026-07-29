@@ -204,8 +204,9 @@ const postForm = (
         headers: { "content-type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(fields),
       }).then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          throw new Error(`Sentry returned HTTP ${response.status} without JSON.`);
         }
         return response.json();
       }),
