@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/tomanagle/rootcause/compare/rootcause-v1.1.1...rootcause-v1.1.2) (2026-07-29)
+
+
+### Bug Fixes
+
+* publish under npm scope ([7547730](https://github.com/tomanagle/rootcause/commit/7547730c63010de19d46bc1db8a5010c8cf2ed81))
+
 ## [1.1.1](https://github.com/tomanagle/rootcause/compare/rootcause-v1.1.0...rootcause-v1.1.1) (2026-07-29)
 
 
