@@ -168,8 +168,8 @@ sanitized `.tracecause/cases/<case-id>/context.md` file. Provider credentials
 stay inside the Tracecause process.
 
 Environment credentials take precedence so the same commands work in CI.
-Sentry device login is wired into the CLI. Cloudflare OAuth registration and
-login remain in progress.
+Sentry device login is wired into the CLI. Local Cloudflare authentication
+reuses the OAuth session managed and refreshed by Wrangler.
 
 ## Runtime and toolchain
 
@@ -189,4 +189,5 @@ reviewed knowledge promotion, and knowledge-guided provider ranking are
 implemented. Repository stack-frame resolution, user-defined entity fields,
 and narrower knowledge-guided provider scopes remain planned.
 
-See [SPEC.md](./SPEC.md) for the complete product and technical plan.
+See the [documentation index](./docs/README.md) for the implemented CLI,
+authentication, providers, case format, knowledge workflow, and library API.
