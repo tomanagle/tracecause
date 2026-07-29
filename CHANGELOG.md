@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.2](https://github.com/tomanagle/tracecause/compare/rootcause-v1.1.1...tracecause-v1.1.2) (2026-07-29)
+## [1.2.0](https://github.com/tomanagle/tracecause/compare/rootcause-v1.1.1...tracecause-v1.2.0) (2026-07-29)
 
 
 ### Features
