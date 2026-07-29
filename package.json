@@ -1,6 +1,6 @@
 {
   "name": "tracecause",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Evidence-driven production incident investigation",
   "homepage": "https://github.com/tomanagle/tracecause#readme",
   "bugs": {
