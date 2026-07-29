@@ -4,7 +4,7 @@
 **Working product name:** Rootcause  
 **Primary implementation language:** TypeScript  
 **Distribution:** npm package with an executable CLI  
-**Primary invocation:** `npx rootcause investigate ...`  
+**Primary invocation:** `npx @tomanagle/rootcause investigate ...`
 **Module format:** ESM only  
 **Development toolchain:** Bun, `bun:test`, tsup, Oxlint, and Oxfmt  
 **Internal application runtime:** Effect v4 beta  
@@ -52,7 +52,7 @@ The MVP does **not** replay or reproduce the bug. Replay may be added later as a
 The first version has one command and one primary outcome:
 
 ```bash
-npx rootcause investigate "https://sentry.io/organizations/acme/issues/123456/"
+npx @tomanagle/rootcause investigate "https://sentry.io/organizations/acme/issues/123456/"
 ```
 
 The command should produce a local investigation case containing:
@@ -183,7 +183,7 @@ A user must be able to answer:
 ### 4.1 Initialise a repository
 
 ```bash
-npx rootcause init
+npx @tomanagle/rootcause init
 ```
 
 Creates:
@@ -207,9 +207,9 @@ knowledge intended to be committed and shared with the repository.
 
 ```ts
 // .rootcause/config.ts
-import { defineConfig, fieldEntityExtractor } from "rootcause";
-import { sentryIssueSource } from "rootcause/providers/sentry";
-import { cloudflareWorkersLogs } from "rootcause/providers/cloudflare-workers";
+import { defineConfig, fieldEntityExtractor } from "@tomanagle/rootcause";
+import { sentryIssueSource } from "@tomanagle/rootcause/providers/sentry";
+import { cloudflareWorkersLogs } from "@tomanagle/rootcause/providers/cloudflare-workers";
 
 export default defineConfig({
   issueSources: [
@@ -265,7 +265,7 @@ Rootcause must not assume that Sentry authentication is already configured.
 Interactive OAuth is the default local-development experience:
 
 ```bash
-npx rootcause auth login sentry
+npx @tomanagle/rootcause auth login sentry
 ```
 
 The command uses Sentry's OAuth 2 device authorization flow:
@@ -385,7 +385,7 @@ the agent access only to the sanitized case bundle.
 Interactive OAuth is also the default Cloudflare experience:
 
 ```bash
-npx rootcause auth login cloudflare
+npx @tomanagle/rootcause auth login cloudflare
 ```
 
 Cloudflare does not support the OAuth device authorization grant for
@@ -437,7 +437,7 @@ telemetry query before beginning an investigation.
 ### 4.3 Investigate an issue
 
 ```bash
-npx rootcause investigate \
+npx @tomanagle/rootcause investigate \
   "https://sentry.io/organizations/acme/issues/123456/"
 ```
 
@@ -481,7 +481,7 @@ JSON:    .rootcause/cases/rc_V1StGXR8_Z5jdHi6/context.json
 ### 4.4 Agent-oriented output
 
 ```bash
-npx rootcause investigate <issue-reference> --format agent
+npx @tomanagle/rootcause investigate <issue-reference> --format agent
 ```
 
 This mode should:
@@ -497,7 +497,7 @@ This mode should:
 Optional direct stdout mode:
 
 ```bash
-npx rootcause investigate <issue-reference> \
+npx @tomanagle/rootcause investigate <issue-reference> \
   --format agent \
   --output stdout
 ```
@@ -505,7 +505,7 @@ npx rootcause investigate <issue-reference> \
 ### 4.5 Machine-readable output
 
 ```bash
-npx rootcause investigate <issue-reference> --format json
+npx @tomanagle/rootcause investigate <issue-reference> --format json
 ```
 
 The final JSON should conform to the versioned `InvestigationContext` schema.
@@ -513,7 +513,7 @@ The final JSON should conform to the versioned `InvestigationContext` schema.
 A streaming mode may emit progress as NDJSON:
 
 ```bash
-npx rootcause investigate <issue-reference> --format ndjson
+npx @tomanagle/rootcause investigate <issue-reference> --format ndjson
 ```
 
 ---
@@ -528,7 +528,7 @@ The recommended MVP flow is:
 User asks coding agent to investigate a production issue
                          │
                          ▼
-Agent runs `npx rootcause investigate <issue> --format agent`
+Agent runs `npx @tomanagle/rootcause investigate <issue> --format agent`
                          │
                          ▼
 Rootcause accesses providers locally using configured credentials
@@ -545,7 +545,7 @@ Example instruction to an agent:
 ```text
 Run:
 
-npx rootcause investigate "<issue-url>" --format agent
+npx @tomanagle/rootcause investigate "<issue-url>" --format agent
 
 Then read the generated context.md, inspect the referenced source files,
 and use the evidence to identify the likely cause. Do not treat hypotheses
@@ -591,7 +591,7 @@ MCP is a later convenience layer, not the source of truth.
 A future command may start an MCP server:
 
 ```bash
-npx rootcause mcp
+npx @tomanagle/rootcause mcp
 ```
 
 Potential tools:
@@ -616,7 +616,7 @@ Later releases may generate or install lightweight integrations for common codin
 ```text
 ┌──────────────────────────────┐
 │ CLI                          │
-│ npx rootcause investigate     │
+│ npx @tomanagle/rootcause investigate │
 └──────────────┬───────────────┘
                │
 ┌──────────────▼───────────────┐
@@ -756,7 +756,7 @@ rootcause/
 └── bun.lock
 ```
 
-For the first release, only the root `rootcause` package needs to be public. Internal packages may remain private workspace packages and be bundled into the CLI.
+For the first release, only the root `@tomanagle/rootcause` package needs to be public. Internal packages may remain private workspace packages and be bundled into the CLI.
 
 The root `package.json` defines the Bun workspace. Bun is used for dependency
 management, scripts, and tests, but production code must not depend on
@@ -1685,7 +1685,7 @@ Partial evidence-source failures should normally produce exit code `0` with expl
 ### 17.4 Programmatic API
 
 ```ts
-import { investigate, loadConfig } from "rootcause";
+import { investigate, loadConfig } from "@tomanagle/rootcause";
 
 const config = await loadConfig();
 const result = await investigate({
@@ -1704,9 +1704,9 @@ and Deno.
 Expected invocation forms:
 
 ```bash
-npx rootcause investigate <issue-reference>
-bunx rootcause investigate <issue-reference>
-deno run -A npm:rootcause investigate <issue-reference>
+npx @tomanagle/rootcause investigate <issue-reference>
+bunx @tomanagle/rootcause investigate <issue-reference>
+deno run -A npm:@tomanagle/rootcause investigate <issue-reference>
 ```
 
 The published executable may use a Node shebang for npm and `npx`
@@ -1759,7 +1759,7 @@ Case updates must be written atomically so interruption does not corrupt prior s
 Not required for the first implementation, but persisted state should permit:
 
 ```bash
-npx rootcause investigate --resume rc_V1StGXR8_Z5jdHi6
+npx @tomanagle/rootcause investigate --resume rc_V1StGXR8_Z5jdHi6
 ```
 
 The deduplication key for prior searches must be persisted.
@@ -2045,13 +2045,13 @@ source directly.
 **Acceptance criteria:**
 
 ```bash
-npx rootcause --help
-npx rootcause init
-npx rootcause auth login sentry
-npx rootcause auth status sentry
-npx rootcause auth login cloudflare
-npx rootcause auth status cloudflare
-npx rootcause config validate
+npx @tomanagle/rootcause --help
+npx @tomanagle/rootcause init
+npx @tomanagle/rootcause auth login sentry
+npx @tomanagle/rootcause auth status sentry
+npx @tomanagle/rootcause auth login cloudflare
+npx @tomanagle/rootcause auth status cloudflare
+npx @tomanagle/rootcause config validate
 ```
 
 work in a clean fixture project.
@@ -2111,7 +2111,7 @@ influenced the plan. No fixture entity value may be written to
 ### Milestone 6 — Publishable MVP
 
 - Bundled public npm package.
-- `npx rootcause investigate` smoke test.
+- `npx @tomanagle/rootcause investigate` smoke test.
 - README and example.
 - Security documentation.
 - Provider author guide.
@@ -2124,7 +2124,7 @@ influenced the plan. No fixture entity value may be written to
 The MVP is complete when all of the following are true:
 
 1. It is implemented in TypeScript.
-2. It runs as `npx rootcause investigate <issue-reference>`.
+2. It runs as `npx @tomanagle/rootcause investigate <issue-reference>`.
 3. The core contains no Sentry or Cloudflare query syntax.
 4. A Sentry issue is normalized through an `IssueSource` implementation.
 5. Cloudflare logs are queried through an `EvidenceSource` implementation.
@@ -2214,17 +2214,17 @@ Replay should consume the same `InvestigationContext`; it must not become a comp
 ## 25. Naming and package plan
 
 **Recommended working name:** Rootcause  
-**Recommended npm package:** `rootcause`  
+**Recommended npm package:** `@tomanagle/rootcause`
 **CLI binary:** `rootcause`
 
 Example:
 
 ```json
 {
-  "name": "rootcause",
+  "name": "@tomanagle/rootcause",
   "type": "module",
   "bin": {
-    "rootcause": "./dist/cli.js"
+    "rootcause": "dist/cli.js"
   },
   "exports": {
     ".": "./dist/index.js",

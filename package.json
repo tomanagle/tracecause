@@ -1,5 +1,5 @@
 {
-  "name": "rootcause",
+  "name": "@tomanagle/rootcause",
   "version": "1.1.1",
   "description": "Evidence-driven production incident investigation",
   "homepage": "https://github.com/tomanagle/rootcause#readme",

@@ -3,7 +3,8 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "rootcause",
+      "package-name": "@tomanagle/rootcause",
+      "component": "rootcause",
       "include-v-in-tag": true,
       "changelog-path": "CHANGELOG.md"
     }
