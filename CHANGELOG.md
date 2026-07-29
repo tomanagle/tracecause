@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/tomanagle/tracecause/compare/tracecause-v1.3.2...tracecause-v1.4.0) (2026-07-29)
+
+
+### Features
+
+* add reviewed investigation knowledge mappings ([00ab61f](https://github.com/tomanagle/tracecause/commit/00ab61f5c7feb093a84bc2baa0593b9a1f191cab))
+* reuse Wrangler authentication for Cloudflare ([a531e8a](https://github.com/tomanagle/tracecause/commit/a531e8a796e90052deed129e66e38fde77babc73))
+
 ## [1.3.2](https://github.com/tomanagle/tracecause/compare/tracecause-v1.3.1...tracecause-v1.3.2) (2026-07-29)
 
 
