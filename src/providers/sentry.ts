@@ -12,8 +12,8 @@ const sentryIssueResponseSchema = z
     id: z.string(),
     title: z.string(),
     level: z.string().optional(),
-    firstSeen: z.string().datetime().optional(),
-    lastSeen: z.string().datetime().optional(),
+    firstSeen: z.iso.datetime().optional(),
+    lastSeen: z.iso.datetime().optional(),
     project: z
       .object({
         id: z.string(),
@@ -39,7 +39,7 @@ const sentryEventResponseSchema = z
     eventID: z.string().optional(),
     title: z.string(),
     message: z.string().optional(),
-    dateCreated: z.string().datetime(),
+    dateCreated: z.iso.datetime(),
     platform: z.string().optional(),
     projectID: z.string().optional(),
     tags: z

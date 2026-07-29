@@ -33,7 +33,7 @@ export const evidenceSchema = z
       externalId: z.string(),
     }),
     sourceType: z.enum(["issue", "log", "trace", "deployment", "event"]),
-    timestamp: z.string().datetime(),
+    timestamp: z.iso.datetime(),
     service: z.string().optional(),
     level: z.string().optional(),
     message: z.string().optional(),
@@ -61,9 +61,9 @@ export const issueSchema = z
     }),
     title: z.string(),
     message: z.string().optional(),
-    occurredAt: z.string().datetime(),
-    firstSeenAt: z.string().datetime().optional(),
-    lastSeenAt: z.string().datetime().optional(),
+    occurredAt: z.iso.datetime(),
+    firstSeenAt: z.iso.datetime().optional(),
+    lastSeenAt: z.iso.datetime().optional(),
     environment: z.string().optional(),
     release: z.string().optional(),
     service: z.string().optional(),
@@ -92,8 +92,8 @@ export const searchIntentSchema = z
       value: z.string(),
     }),
     timeRange: z.object({
-      from: z.string().datetime(),
-      to: z.string().datetime(),
+      from: z.iso.datetime(),
+      to: z.iso.datetime(),
     }),
     mode: z.enum(["exact", "related-history", "full-text"]),
     limit: z.number().int().positive(),
@@ -109,8 +109,8 @@ export const searchExecutionSchema = z
   .object({
     intent: searchIntentSchema,
     providerQuerySummary: z.string(),
-    startedAt: z.string().datetime(),
-    completedAt: z.string().datetime(),
+    startedAt: z.iso.datetime(),
+    completedAt: z.iso.datetime(),
     status: z.enum(["completed", "failed", "skipped", "budget-exhausted"]),
     recordsRead: z.number().int().nonnegative(),
     recordsAccepted: z.number().int().nonnegative(),
@@ -122,7 +122,7 @@ export type SearchExecution = z.infer<typeof searchExecutionSchema>;
 export const timelineEventSchema = z
   .object({
     id: z.string(),
-    timestamp: z.string().datetime(),
+    timestamp: z.iso.datetime(),
     service: z.string().optional(),
     title: z.string(),
     summary: z.string(),
@@ -138,8 +138,8 @@ export const investigationContextSchema = z
   .object({
     schemaVersion: z.literal("1"),
     caseId: z.string(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
     issue: issueSchema,
     summary: z.object({
       title: z.string(),
